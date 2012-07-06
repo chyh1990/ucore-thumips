@@ -5,7 +5,8 @@
 #include <stdarg.h>
 
 /* kern/libs/stdio.c */
-int cprintf(const char *str);
+int vcprintf(const char *fmt, va_list ap);
+int cprintf(const char *fmt, ...);
 void cputchar(int c);
 int cputs(const char *str);
 int getchar(void);

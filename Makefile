@@ -85,7 +85,7 @@ $(DEPDIR)/%.d: $(SRCDIR)/%.c
 		$(CLANG) -MM -MT "$(OBJDIR)/$*.o $@" $(CFLAGS) $(INCLUDES) $< > $@; 
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.c
-	/opt/CodeSourcery/Sourcery_CodeBench_Lite_for_MIPS_ELF/bin/mips-sde-elf-gcc -c -EL -G0 $(INCLUDES) $(CFLAGS)  $<  -o $@
+	/opt/CodeSourcery/Sourcery_CodeBench_Lite_for_MIPS_ELF/bin/mips-sde-elf-gcc -fno-delayed-branch -mips1 -g -c -EL -G0 $(INCLUDES) $(CFLAGS)  $<  -o $@
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.S
 	$(CLANG) $(INCLUDES) -D__ASSEMBLY__ -E $< | $(AS) -o $@

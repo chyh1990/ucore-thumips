@@ -20,6 +20,11 @@
 
 #include <asm/mipsregs.h>
 
+#define THUMIPS_TLB_ENTRYL_V (1<<1)
+#define THUMIPS_TLB_ENTRYL_D (1<<2)
+#define THUMIPS_TLB_ENTRYL_G (1<<0)
+#define THUMIPS_TLB_ENTRYH_VPN2_MASK (~0x1FFF)
+
 static inline void write_one_tlb(int index, unsigned int pagemask, unsigned int hi, unsigned int low0, unsigned int low1)
 {
 	write_c0_entrylo0(low0);
@@ -30,7 +35,14 @@ static inline void write_one_tlb(int index, unsigned int pagemask, unsigned int 
 	tlb_write_indexed();
 }
 
-void tlb_invalidate_all();
-void tlb_invalidate(pde_t *pgdir, uintptr_t la);
+static inline void tlb_replace_random(unsigned int pagemask, unsigned int hi, unsigned int low0, unsigned int low1)
+{
+	write_c0_entrylo0(low0);
+	write_c0_pagemask(pagemask);
+	write_c0_entrylo1(low1);
+	write_c0_entryhi(hi);
+  tlb_write_random();
+}
 
+void tlb_invalidate_all();
 #endif

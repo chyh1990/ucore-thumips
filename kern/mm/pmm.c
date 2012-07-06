@@ -19,6 +19,8 @@ size_t npage = 0;
 
 // virtual address of boot-time page directory
 pde_t *boot_pgdir = NULL;
+pde_t *current_pgdir = NULL;
+
 // physical address of boot-time page directory
 uintptr_t boot_cr3;
 
@@ -178,6 +180,7 @@ pmm_init(void) {
     boot_pgdir = boot_alloc_page();
     memset(boot_pgdir, 0, PGSIZE);
     boot_cr3 = PADDR(boot_pgdir);
+    current_pgdir = boot_pgdir;
 
     check_pgdir();
 
@@ -189,6 +192,8 @@ pmm_init(void) {
 
     memset(boot_pgdir, 0, PGSIZE);
     print_pgdir();
+
+  	kmalloc_init();
 }
 
 //get_pte - get pte and return the kernel virtual address of this pte for la
@@ -366,13 +371,19 @@ check_boot_pgdir(void) {
     assert(boot_pgdir[0] == 0);
     struct Page *p;
     p = alloc_page();
+    *(int*)(page2kva(p) + 0x100) = 0x1234;
+    //printhex(page2kva(p));
+    //cprintf("\n");
+    //printhex(*(int*)(page2kva(p)+0x100));
+
     assert(page_insert(boot_pgdir, p, 0x100, PTE_W) == 0);
     assert(page_ref(p) == 1);
     assert(page_insert(boot_pgdir, p, 0x100 + PGSIZE, PTE_W) == 0);
     assert(page_ref(p) == 2);
 
-    cprintf("HERE\n");
+    //cprintf("\nHERE\n");
 
+    assert(*(int*)0x100 == 0x1234);
     const char *str = "ucore: Hello world!!";
     strcpy((void *)0x100, str);
     assert(strcmp((void *)0x100, (void *)(0x100 + PGSIZE)) == 0);
@@ -383,6 +394,7 @@ check_boot_pgdir(void) {
     free_page(p);
     free_page(pa2page(PDE_ADDR(boot_pgdir[0])));
     boot_pgdir[0] = 0;
+    tlb_invalidate_all();
 
     cprintf("check_boot_pgdir() succeeded!\n");
 }

@@ -10,20 +10,19 @@ static bool is_panic = 0;
  * "panic: 'message'", and then enters the kernel monitor.
  * */
 void
-__panic(const char *file, int line, const char *fmt) {
+__panic(const char *file, int line, const char *fmt, ...) {
     if (is_panic) {
         goto panic_dead;
     }
     is_panic = 1;
 
     // print the 'message'
-    cprintf("kernel panic at ");
-    cprintf(file);
-    cprintf(":");
-    printbase10(line);
-    cprintf("\n      ");
-    cprintf(fmt);
+    va_list ap;
+    va_start(ap, fmt);
+    cprintf("kernel panic at %s:%d:\n    ", file, line);
+    vcprintf(fmt, ap);
     cprintf("\n");
+    va_end(ap);
 
 panic_dead:
     intr_disable();

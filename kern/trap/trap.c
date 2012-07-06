@@ -3,9 +3,12 @@
 #include <clock.h>
 #include <trap.h>
 #include <thumips.h>
+#include <thumips_tlb.h>
 #include <stdio.h>
 #include <mmu.h>
+#include <pmm.h>
 #include <memlayout.h>
+#include <glue_pgmap.h>
 #include <assert.h>
 #include <console.h>
 #include <kdebug.h>
@@ -102,6 +105,42 @@ static void interrupt_handler(struct trapframe *tf)
 
 }
 
+extern pde_t *current_pgdir;
+
+#define PTE2TLBLOW(x) (((((uint32_t)(*(x))-KERNBASE)>> 12)<<6)|THUMIPS_TLB_ENTRYL_V|THUMIPS_TLB_ENTRYL_D|(2<<3))
+static inline uint32_t pte2tlblow(pte_t pte)
+{
+  uint32_t t = (((uint32_t)pte - KERNBASE ) >> 12)<<6;
+  t |= THUMIPS_TLB_ENTRYL_V;
+  /* always ignore ASID */
+  t |= THUMIPS_TLB_ENTRYL_G;
+  t |= (2<<3);
+  if(ptep_s_write(&pte))
+    t |= THUMIPS_TLB_ENTRYL_D;
+  return t;
+}
+
+/* use software emulated X86 pgfault */
+static int handle_tlbmiss(struct trapframe* tf, int write)
+{
+  assert(current_pgdir != NULL);
+  print_trapframe(tf);
+  uint32_t badaddr = tf->tf_vaddr;
+  pte_t *pte = get_pte(current_pgdir, tf->tf_vaddr, 0);
+  if(pte==NULL || ptep_invalid(pte)){   //PTE miss, pgfault
+    panic("unimpl");
+  }else{ //tlb miss only, reload it
+    /* refill two slot */
+    //printhex(*pte);
+    //cprintf("\n");
+    if(badaddr & (1<<12))
+      pte--;
+    tlb_replace_random(0, badaddr & THUMIPS_TLB_ENTRYH_VPN2_MASK, 
+      pte2tlblow(*pte), pte2tlblow(*(pte+1)));
+  }
+  return -1;
+}
+
 static void
 trap_dispatch(struct trapframe *tf) {
   int code = GET_CAUSE_EXCODE(tf->tf_cause);
@@ -110,9 +149,10 @@ trap_dispatch(struct trapframe *tf) {
       interrupt_handler(tf);
       break;
     case EX_TLBL:
+      handle_tlbmiss(tf, 0);
+      break;
     case EX_TLBS:
-      print_trapframe(tf);
-      while(1);
+      handle_tlbmiss(tf, 1);
       break;
     case EX_RI:
       print_trapframe(tf);

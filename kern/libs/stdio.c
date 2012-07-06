@@ -1,4 +1,6 @@
 #include <defs.h>
+#include <thumips.h>
+#include <unistd.h>
 #include <stdio.h>
 #include <console.h>
 
@@ -13,7 +15,7 @@ cputch(int c, int *cnt) {
     cons_putc(c);
     (*cnt) ++;
 }
-
+#if 0
 /* *
  * cprintf - formats a string and writes it to stdout
  *
@@ -33,6 +35,39 @@ cprintf(const char *str) {
     //va_end(ap);
     return cnt;
 }
+#endif
+
+/* *
+ * vcprintf - format a string and writes it to stdout
+ *
+ * The return value is the number of characters which would be
+ * written to stdout.
+ *
+ * Call this function if you are already dealing with a va_list.
+ * Or you probably want cprintf() instead.
+ * */
+int
+vcprintf(const char *fmt, va_list ap) {
+    int cnt = 0;
+    vprintfmt((void*)cputch, NO_FD, &cnt, fmt, ap);
+    return cnt;
+}
+
+/* *
+ * cprintf - formats a string and writes it to stdout
+ *
+ * The return value is the number of characters which would be
+ * written to stdout.
+ * */
+int
+cprintf(const char *fmt, ...) {
+    va_list ap;
+    int cnt;
+    va_start(ap, fmt);
+    cnt = vcprintf(fmt, ap);
+    va_end(ap);
+    return cnt;
+}
 
 
 static const char* hexdigits = "0123456789ABCDEF";
@@ -47,21 +82,7 @@ void printhex(unsigned int x){
   cprintf(tmp);
 }
 
-static inline unsigned int __mulu10(unsigned int n)
-{
-  return (n<<3)+(n<<1);
-}
 
-static inline unsigned int divu10(unsigned int n) {
-  unsigned int q, r;
-  q = (n >> 1) + (n >> 2);
-  q = q + (q >> 4);
-  q = q + (q >> 8);
-  q = q + (q >> 16);
-  q = q >> 3;
-  r = n - __mulu10(q);
-  return q + ((r + 6) >> 4);
-}
 
 void printbase10(int x){
   unsigned int t;
@@ -71,7 +92,7 @@ void printbase10(int x){
     cputchar('-');
   x = (x<0)?-x:x;
   while(x >= 10){
-    t = divu10(x); 
+    t = __divu10(x); 
     buf[i++] = ('0'+(x-__mulu10(t)));
     x = t;
   }

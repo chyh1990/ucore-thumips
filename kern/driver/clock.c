@@ -18,7 +18,7 @@ static void reload_timer()
 int clock_int_handler(void * data)
 {
   ticks++;
-  if(ticks % 100 == 0)
+  if( (ticks & 0x1F) == 0)
     cons_putc('A');
   
   reload_timer(); 

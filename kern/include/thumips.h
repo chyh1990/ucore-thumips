@@ -12,6 +12,21 @@
 
 #define barrier() __asm__ __volatile__ ("" ::: "memory")
 
+static inline unsigned int __mulu10(unsigned int n)
+{
+  return (n<<3)+(n<<1);
+}
+
+static inline unsigned int __divu10(unsigned int n) {
+  unsigned int q, r;
+  q = (n >> 1) + (n >> 2);
+  q = q + (q >> 4);
+  q = q + (q >> 8);
+  q = q + (q >> 16);
+  q = q >> 3;
+  r = n - __mulu10(q);
+  return q + ((r + 6) >> 4);
+}
 
 static inline uint8_t inb(uint32_t port) __attribute__((always_inline));
 static inline void outb(uint32_t port, uint8_t data) __attribute__((always_inline));
@@ -46,6 +61,7 @@ outw(uint32_t port, uint32_t data) {
 #define COM1_IRQ        4
 
 #define TIMER0_IRQ       7
+
 
 #endif /* !__LIBS_THUMIPS_H__ */
 
