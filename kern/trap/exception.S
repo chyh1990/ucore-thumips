@@ -243,7 +243,7 @@ exception_return:
 
 .globl forkrets
 .type forkrets, @function
-.ent switch_to
+.ent forkrets 
 forkrets:
   addiu sp, a0, -16
   b exception_return

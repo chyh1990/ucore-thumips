@@ -58,10 +58,20 @@ struct proc_struct {
     char name[PROC_NAME_LEN + 1];               // Process name
     list_entry_t list_link;                     // Process link list 
     list_entry_t hash_link;                     // Process hash list
+    int exit_code;                              // exit code (be sent to parent proc)
+    uint32_t wait_state;                        // waiting state
+    struct proc_struct *cptr, *yptr, *optr;     // relations between processes
 };
 
+
+#define PF_EXITING                  0x00000001      // getting shutdown
+
+#define WT_CHILD                    (0x00000001 | WT_INTERRUPTED)
+#define WT_INTERRUPTED               0x80000000                    // the wait state could be interrupted
+
+
 #define le2proc(le, member)         \
-    to_struct((le), struct proc_struct, member)
+  to_struct((le), struct proc_struct, member)
 
 extern struct proc_struct *idleproc, *initproc, *current;
 

@@ -10,10 +10,21 @@
 #define KSTACKPAGE          2                           // # of pages in kernel stack
 #define KSTACKSIZE          (KSTACKPAGE * PGSIZE)       // sizeof kernel stack
 
+#define USERBASE            0x10000000
+#define USERTOP             MIPS_KSEG0 
+
+#define USER_ACCESS(start, end)                     \
+(USERBASE <= (start) && (start) < (end) && (end) <= USERTOP)
+
+#define KERN_ACCESS(start, end)                     \
+(KERNBASE <= (start) && (start) < (end) && (end) <= KERNTOP)
+
+
 #ifndef __ASSEMBLER__
 
 #include <defs.h>
 #include <atomic.h>
+#include <sync.h>
 #include <list.h>
 
 typedef uintptr_t pte_t;

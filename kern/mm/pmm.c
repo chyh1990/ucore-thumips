@@ -19,6 +19,8 @@ size_t npage = 0;
 
 // virtual address of boot-time page directory
 pde_t *boot_pgdir = NULL;
+
+/* this is our emulated "CR3" */
 pde_t *current_pgdir = NULL;
 
 // physical address of boot-time page directory
@@ -30,6 +32,11 @@ const struct pmm_manager *pmm_manager;
 static void check_alloc_page(void);
 static void check_pgdir(void);
 static void check_boot_pgdir(void);
+
+void lcr3(uintptr_t cr3)
+{
+  current_pgdir = (pde_t*)cr3;
+}
 
 //init_pmm_manager - initialize a pmm_manager instance
 static void
@@ -497,4 +504,73 @@ print_pgdir(void) {
   }
     cprintf("--------------------- END ---------------------\n");
 }
+
+
+void
+unmap_range(pde_t *pgdir, uintptr_t start, uintptr_t end) {
+    assert(start % PGSIZE == 0 && end % PGSIZE == 0);
+    assert(USER_ACCESS(start, end));
+
+    do {
+        pte_t *ptep = get_pte(pgdir, start, 0);
+        if (ptep == NULL) {
+            start = ROUNDDOWN_2N(start + PTSIZE, PTSHIFT);
+            continue ;
+        }
+        if (*ptep != 0) {
+            page_remove_pte(pgdir, start, ptep);
+        }
+        start += PGSIZE;
+    } while (start != 0 && start < end);
+}
+
+void
+exit_range(pde_t *pgdir, uintptr_t start, uintptr_t end) {
+    assert(start % PGSIZE == 0 && end % PGSIZE == 0);
+    assert(USER_ACCESS(start, end));
+
+    start = ROUNDDOWN_2N(start, PTSHIFT);
+    do {
+        int pde_idx = PDX(start);
+        if (pgdir[pde_idx] & PTE_P) {
+            free_page(pde2page(pgdir[pde_idx]));
+            pgdir[pde_idx] = 0;
+        }
+        start += PTSIZE;
+    } while (start != 0 && start < end);
+}
+
+int
+copy_range(pde_t *to, pde_t *from, uintptr_t start, uintptr_t end, bool share) {
+    assert(start % PGSIZE == 0 && end % PGSIZE == 0);
+    assert(USER_ACCESS(start, end));
+
+    do {
+        pte_t *ptep = get_pte(from, start, 0), *nptep;
+        if (ptep == NULL) {
+            start = ROUNDDOWN_2N(start + PTSIZE, PGSHIFT);
+            continue ;
+        }
+        if (*ptep & PTE_P) {
+          if ((nptep = get_pte(to, start, 1)) == NULL) {
+            return -E_NO_MEM;
+          }
+          uint32_t perm = (*ptep & PTE_USER);
+          struct Page *page = pte2page(*ptep);
+          struct Page *npage=alloc_page();
+          assert(page!=NULL);
+          assert(npage!=NULL);
+          int ret=0;
+          //LAB5:EXERCISE2 2009010989
+          //replicate content of page to npage, build the map of phy addr of nage with the linear addr start
+          memcpy(page2kva(npage), page2kva(page), PGSIZE);
+          page_insert(to, npage, start,perm);
+
+          assert(ret == 0);
+        }
+        start += PGSIZE;
+    } while (start != 0 && start < end);
+    return 0;
+}
+
 

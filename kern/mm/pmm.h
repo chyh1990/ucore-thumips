@@ -36,6 +36,11 @@ struct Page *alloc_pages(size_t n);
 void free_pages(struct Page *base, size_t n);
 size_t nr_free_pages(void);
 
+
+void unmap_range(pde_t *pgdir, uintptr_t start, uintptr_t end);
+void exit_range(pde_t *pgdir, uintptr_t start, uintptr_t end);
+int copy_range(pde_t *to, pde_t *from, uintptr_t start, uintptr_t end, bool share);
+
 #define alloc_page() alloc_pages(1)
 #define free_page(page) free_pages(page, 1)
 

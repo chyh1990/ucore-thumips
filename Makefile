@@ -5,7 +5,8 @@ SLASH	:= /
 
 V       := @
 
-GCCPREFIX:=mips-sde-elf-
+#GCCPREFIX:=mips-sde-elf-
+GCCPREFIX ?= /home/guest/cpu/build-gcc/mips_gcc/bin/mips-sde-elf-
 
 # eliminate default suffix rules
 .SUFFIXES: .c .S .h
@@ -19,8 +20,8 @@ GDB		:= $(GCCPREFIX)gdb
 
 THUMIPSCC		:= ./thumips-cc
 CLANG := clang
-#CC :=$(GCCPREFIX)gcc
-CFLAGS	:= -fno-builtin -nostdlib  -nostdinc
+CC :=$(GCCPREFIX)gcc
+CFLAGS	:= -fno-builtin -nostdlib  -nostdinc -g -EL -G0 -fno-delayed-branch
 CTYPE	:= c S
 
 LD      := $(GCCPREFIX)ld
@@ -82,13 +83,13 @@ obj/ucore-kernel:   $(OBJ) tools/kernel.ld
 $(DEPDIR)/%.d: $(SRCDIR)/%.c
 	@echo DEP $<
 	@set -e; rm -f $@; \
-		$(CLANG) -MM -MT "$(OBJDIR)/$*.o $@" $(CFLAGS) $(INCLUDES) $< > $@; 
+		$(CC) -MM -MT "$(OBJDIR)/$*.o $@" $(CFLAGS) $(INCLUDES) $< > $@; 
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.c
-	/opt/CodeSourcery/Sourcery_CodeBench_Lite_for_MIPS_ELF/bin/mips-sde-elf-gcc -fno-delayed-branch -mips1 -g -c -EL -G0 $(INCLUDES) $(CFLAGS)  $<  -o $@
+	$(CC) -c  $(INCLUDES) $(CFLAGS)  $<  -o $@
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.S
-	/opt/CodeSourcery/Sourcery_CodeBench_Lite_for_MIPS_ELF/bin/mips-sde-elf-gcc -fno-delayed-branch -mips32 -g -c -EL -G0 -D__ASSEMBLY__ $(INCLUDES) $(CFLAGS)  $<  -o $@
+	$(CC) -mips32 -c -D__ASSEMBLY__ $(INCLUDES) $(CFLAGS)  $<  -o $@
 
 checkdirs: $(BUILD_DIR) $(DEP_DIR)
 

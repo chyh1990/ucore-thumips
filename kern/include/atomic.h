@@ -1,8 +1,14 @@
 #ifndef __LIBS_ATOMIC_H__
 #define __LIBS_ATOMIC_H__
 
-#include <sync.h>
+#include <thumips.h>
+#include <asm/mipsregs.h>
+#include <intr.h>
+#include <assert.h>
 /* Atomic operations that C can't guarantee us. Useful for resource counting etc.. */
+
+
+
 
 typedef struct {
   volatile int counter;

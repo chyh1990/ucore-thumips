@@ -166,7 +166,7 @@ slab_mgmt_size(size_t num) {
 }
 
 
-static int slab_div_table[/* order */][/* objsize_shift-5 */ 8] = {
+static int __slab_div_table[/* order */][/* objsize_shift-5 */ 8] = {
   {113, 59, 30, 15},
 };
 
@@ -188,7 +188,7 @@ cache_estimate(size_t order, size_t objsize_shift, bool off_slab, size_t *remain
         /* no div! precomputed */
         //panic("no div, precompute?");
         //nr_objs = (slab_size - sizeof(slab_t)) / (objsize + sizeof(kmem_bufctl_t));
-        nr_objs = slab_div_table[order][objsize_shift - 5];
+        nr_objs = __slab_div_table[order][objsize_shift - 5];
         while (slab_mgmt_size(nr_objs) + nr_objs * objsize > slab_size) {
             nr_objs --;
         }

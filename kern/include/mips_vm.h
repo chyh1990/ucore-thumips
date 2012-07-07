@@ -39,7 +39,7 @@
  * The top of user space. (Actually, the address immediately above the
  * last valid user address.)
  */
-#define USERTOP     MIPS_KSEG0
+//#define USERTOP     MIPS_KSEG0
 
 /*
  * The starting value for the stack pointer at user level.  Because
@@ -49,7 +49,7 @@
  * We put the stack at the very top of user virtual memory because it
  * grows downwards.
  */
-#define USERSTACK   USERTOP
+//#define USERSTACK   USERTOP
 
 /*
  * Interface to the low-level module that looks after the amount of
