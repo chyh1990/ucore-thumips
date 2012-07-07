@@ -107,36 +107,51 @@ static void interrupt_handler(struct trapframe *tf)
 
 extern pde_t *current_pgdir;
 
-#define PTE2TLBLOW(x) (((((uint32_t)(*(x))-KERNBASE)>> 12)<<6)|THUMIPS_TLB_ENTRYL_V|THUMIPS_TLB_ENTRYL_D|(2<<3))
-static inline uint32_t pte2tlblow(pte_t pte)
+
+
+static inline int get_error_code(int write, pte_t *pte)
 {
-  uint32_t t = (((uint32_t)pte - KERNBASE ) >> 12)<<6;
-  t |= THUMIPS_TLB_ENTRYL_V;
-  /* always ignore ASID */
-  t |= THUMIPS_TLB_ENTRYL_G;
-  t |= (2<<3);
-  if(ptep_s_write(&pte))
-    t |= THUMIPS_TLB_ENTRYL_D;
-  return t;
+  int r = 0;
+  if(pte!=NULL && ptep_present(pte))
+    r |= 0x01;
+  if(write)
+    r |= 0x02;
+  return r;
+}
+
+static int
+pgfault_handler(uint32_t addr, uint32_t error_code) {
+    extern struct mm_struct *check_mm_struct;
+    if (check_mm_struct != NULL) {
+        return do_pgfault(check_mm_struct, error_code, addr);
+    }
+    panic("unhandled page fault.\n");
 }
 
 /* use software emulated X86 pgfault */
 static int handle_tlbmiss(struct trapframe* tf, int write)
 {
+  static int entercnt = 0;
+  entercnt ++;
+  cprintf("## enter handle_tlbmiss %d times\n", entercnt);
   assert(current_pgdir != NULL);
-  print_trapframe(tf);
+  //print_trapframe(tf);
   uint32_t badaddr = tf->tf_vaddr;
   pte_t *pte = get_pte(current_pgdir, tf->tf_vaddr, 0);
   if(pte==NULL || ptep_invalid(pte)){   //PTE miss, pgfault
-    panic("unimpl");
+    //panic("unimpl");
+    //TODO
+    //tlb will be refill in do_pgfault,
+    //so a vmm pgfault will trigger only 1 exception
+    int ret = pgfault_handler(badaddr, get_error_code(write, pte));
+    if(ret){
+      panic("unhandled pgfault");
+    }
   }else{ //tlb miss only, reload it
     /* refill two slot */
     //printhex(*pte);
     //cprintf("\n");
-    if(badaddr & (1<<12))
-      pte--;
-    tlb_replace_random(0, badaddr & THUMIPS_TLB_ENTRYH_VPN2_MASK, 
-      pte2tlblow(*pte), pte2tlblow(*(pte+1)));
+    tlb_refill(badaddr, pte); 
   }
   return -1;
 }

@@ -12,10 +12,19 @@
 
 #define barrier() __asm__ __volatile__ ("" ::: "memory")
 
+#define __read_reg(source) (\
+    {int __res;\
+    __asm__ __volatile__("move %0, " #source "\n\t"\
+      : "=r"(__res));\
+    __res;\
+    })
+
 static inline unsigned int __mulu10(unsigned int n)
 {
   return (n<<3)+(n<<1);
 }
+
+/* __divu* routines are from the book, Hacker's Delight */
 
 static inline unsigned int __divu10(unsigned int n) {
   unsigned int q, r;
@@ -26,6 +35,16 @@ static inline unsigned int __divu10(unsigned int n) {
   q = q >> 3;
   r = n - __mulu10(q);
   return q + ((r + 6) >> 4);
+}
+
+static inline unsigned __divu5(unsigned int n) {
+  unsigned int q, r;
+  q = (n >> 3) + (n >> 4);
+  q = q + (q >> 4);
+  q = q + (q >> 8);
+  q = q + (q >> 16);
+  r = n - q*5;
+  return q + (13*r >> 6);
 }
 
 static inline uint8_t inb(uint32_t port) __attribute__((always_inline));

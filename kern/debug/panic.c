@@ -33,9 +33,13 @@ panic_dead:
 
 /* __warn - like panic, but don't */
 void
-__warn(const char *file, int line, const char *fmt) {
-    cprintf("kernel warning at ");
+__warn(const char *file, int line, const char *fmt, ...) {
+    va_list ap;
+    va_start(ap, fmt);
+    cprintf("kernel warning at %s:%d:\n    ", file, line);
+    vcprintf(fmt, ap);
     cprintf("\n");
+    va_end(ap);
 }
 
 bool

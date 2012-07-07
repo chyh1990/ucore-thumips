@@ -7,6 +7,10 @@
 #include <atomic.h>
 #include <assert.h>
 
+/* fork flags used in do_fork*/
+#define CLONE_VM            0x00000100  // set if VM shared between processes
+#define CLONE_THREAD        0x00000200  // thread group
+
 // pmm_manager is a physical memory management class. A special pmm manager - XXX_pmm_manager
 // only needs to implement the methods in pmm_manager class, then XXX_pmm_manager can be used
 // by ucore to manage the total physical memory space.
@@ -39,9 +43,8 @@ pte_t *get_pte(pde_t *pgdir, uintptr_t la, bool create);
 struct Page *get_page(pde_t *pgdir, uintptr_t la, pte_t **ptep_store);
 void page_remove(pde_t *pgdir, uintptr_t la);
 int page_insert(pde_t *pgdir, struct Page *page, uintptr_t la, uint32_t perm);
+struct Page * pgdir_alloc_page(pde_t *pgdir, uintptr_t la, uint32_t perm);
 
-void load_esp0(uintptr_t esp0);
-void tlb_invalidate(pde_t *pgdir, uintptr_t la);
 
 void print_pgdir(void);
 

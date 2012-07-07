@@ -241,3 +241,12 @@ exception_return:
    .end common_exception 
 
 
+.globl forkrets
+.type forkrets, @function
+.ent switch_to
+forkrets:
+  addiu sp, a0, -16
+  b exception_return
+  nop
+
+.end forkrets

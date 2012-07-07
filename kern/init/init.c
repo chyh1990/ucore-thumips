@@ -8,6 +8,8 @@
 #include <clock.h>
 #include <intr.h>
 #include <pmm.h>
+#include <vmm.h>
+#include <proc.h>
 #include <thumips_tlb.h>
 
 void setup_exception_vector()
@@ -37,14 +39,12 @@ kern_init(void) {
 
     pmm_init();                 // init physical memory management
 
-
+    vmm_init();                 // init virtual memory management
+    proc_init();                // init process table
     clock_init();               // init clock interrupt
     intr_enable();              // enable irq interrupt
-
     //*(int*)(0x00124) = 0x432;
     //asm volatile("divu $1, $1, $1");
-
-    /* do nothing */
-    while (1);
+    cpu_idle();
 }
 

@@ -49,7 +49,7 @@ SRCDIR  := kern
 DEPDIR  := dep
 
 
-MODULES   := init libs debug driver trap mm sync
+MODULES   := init libs debug driver trap mm sync process schedule
 SRC_DIR   := $(addprefix $(SRCDIR)/,$(MODULES))
 BUILD_DIR := $(addprefix $(OBJDIR)/,$(MODULES))
 DEP_DIR   := $(addprefix $(DEPDIR)/,$(MODULES))
@@ -88,7 +88,7 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.c
 	/opt/CodeSourcery/Sourcery_CodeBench_Lite_for_MIPS_ELF/bin/mips-sde-elf-gcc -fno-delayed-branch -mips1 -g -c -EL -G0 $(INCLUDES) $(CFLAGS)  $<  -o $@
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.S
-	$(CLANG) $(INCLUDES) -D__ASSEMBLY__ -E $< | $(AS) -o $@
+	/opt/CodeSourcery/Sourcery_CodeBench_Lite_for_MIPS_ELF/bin/mips-sde-elf-gcc -fno-delayed-branch -mips32 -g -c -EL -G0 -D__ASSEMBLY__ $(INCLUDES) $(CFLAGS)  $<  -o $@
 
 checkdirs: $(BUILD_DIR) $(DEP_DIR)
 

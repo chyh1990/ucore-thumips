@@ -8,9 +8,10 @@
 .extern end
 
 .set noreorder
-.set STACKSIZE, 0x1000
 
 .section .startup
+
+#define KSTACKSIZE (4096*2)
 
 kernel_entry:
   b reset
@@ -33,9 +34,10 @@ reset:
   .word _gp
 1:
   lw $gp, 0($ra)
-  la $sp, stack+STACKSIZE-32
+  la $sp, bootstacktop
 #setup ram exception
   la   $t0, __exception_vector
+#TODO
   mtc0 $t0, $15, 1 
 
   mfc0 $t0, CP0_STATUS
@@ -54,6 +56,7 @@ reset:
   bgtz $a3, 2b
   nop 
 
+  addiu $sp, $sp, -16
   la $t9, kern_init 
   jal $t9
   nop
@@ -72,8 +75,12 @@ romExcHandle_300:
   nop
 
 
-.section .bss
-stack:
-  .space STACKSIZE
+.section .data
+    .global bootstack
+bootstack:
+    .space KSTACKSIZE
+    .global bootstacktop
+bootstacktop:
+    .space 32
 
 

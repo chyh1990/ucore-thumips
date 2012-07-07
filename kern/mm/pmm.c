@@ -307,94 +307,113 @@ page_insert(pde_t *pgdir, struct Page *page, uintptr_t la, uint32_t perm) {
     return 0;
 }
 
+extern int swap_init_ok;
+// pgdir_alloc_page - call alloc_page & page_insert functions to 
+//                  - allocate a page size memory & setup an addr map
+//                  - pa<->la with linear address la and the PDT pgdir
+struct Page *
+pgdir_alloc_page(pde_t *pgdir, uintptr_t la, uint32_t perm) {
+  struct Page *page = alloc_page();
+  if (page != NULL) {
+    if (page_insert(pgdir, page, la, perm) != 0) {
+      free_page(page);
+      return NULL;
+    }
+    if (swap_init_ok){
+        panic("No swap!! never reach!!"); 
+    }
+  }
+
+  return page;
+}
 
 static void
 check_alloc_page(void) {
-    pmm_manager->check();
-    cprintf("check_alloc_page() succeeded!\n");
+  pmm_manager->check();
+  cprintf("check_alloc_page() succeeded!\n");
 }
 
 static void
 check_pgdir(void) {
-    assert(npage <= KMEMSIZE / PGSIZE);
-    assert(boot_pgdir != NULL && (uint32_t)PGOFF(boot_pgdir) == 0);
-    assert(get_page(boot_pgdir, 0x0, NULL) == NULL);
+  assert(npage <= KMEMSIZE / PGSIZE);
+  assert(boot_pgdir != NULL && (uint32_t)PGOFF(boot_pgdir) == 0);
+  assert(get_page(boot_pgdir, 0x0, NULL) == NULL);
 
-    struct Page *p1, *p2;
-    p1 = alloc_page();
-    assert(page_insert(boot_pgdir, p1, 0x0, 0) == 0);
+  struct Page *p1, *p2;
+  p1 = alloc_page();
+  assert(page_insert(boot_pgdir, p1, 0x0, 0) == 0);
 
-    pte_t *ptep;
-    assert((ptep = get_pte(boot_pgdir, 0x0, 0)) != NULL);
-    assert(pa2page(*ptep) == p1);
-    assert(page_ref(p1) == 1);
+  pte_t *ptep;
+  assert((ptep = get_pte(boot_pgdir, 0x0, 0)) != NULL);
+  assert(pa2page(*ptep) == p1);
+  assert(page_ref(p1) == 1);
 
-    ptep = &((pte_t *)KADDR(PDE_ADDR(boot_pgdir[0])))[1];
-    assert(get_pte(boot_pgdir, PGSIZE, 0) == ptep);
+  ptep = &((pte_t *)KADDR(PDE_ADDR(boot_pgdir[0])))[1];
+  assert(get_pte(boot_pgdir, PGSIZE, 0) == ptep);
 
-    p2 = alloc_page();
-    assert(page_insert(boot_pgdir, p2, PGSIZE, PTE_U | PTE_W) == 0);
-    assert((ptep = get_pte(boot_pgdir, PGSIZE, 0)) != NULL);
-    assert(*ptep & PTE_U);
-    assert(*ptep & PTE_W);
-    assert(boot_pgdir[0] & PTE_U);
-    assert(page_ref(p2) == 1);
+  p2 = alloc_page();
+  assert(page_insert(boot_pgdir, p2, PGSIZE, PTE_U | PTE_W) == 0);
+  assert((ptep = get_pte(boot_pgdir, PGSIZE, 0)) != NULL);
+  assert(*ptep & PTE_U);
+  assert(*ptep & PTE_W);
+  assert(boot_pgdir[0] & PTE_U);
+  assert(page_ref(p2) == 1);
 
-    assert(page_insert(boot_pgdir, p1, PGSIZE, 0) == 0);
-    assert(page_ref(p1) == 2);
-    assert(page_ref(p2) == 0);
-    assert((ptep = get_pte(boot_pgdir, PGSIZE, 0)) != NULL);
-    assert(pa2page(*ptep) == p1);
-    assert((*ptep & PTE_U) == 0);
+  assert(page_insert(boot_pgdir, p1, PGSIZE, 0) == 0);
+  assert(page_ref(p1) == 2);
+  assert(page_ref(p2) == 0);
+  assert((ptep = get_pte(boot_pgdir, PGSIZE, 0)) != NULL);
+  assert(pa2page(*ptep) == p1);
+  assert((*ptep & PTE_U) == 0);
 
-    page_remove(boot_pgdir, 0x0);
-    assert(page_ref(p1) == 1);
-    assert(page_ref(p2) == 0);
+  page_remove(boot_pgdir, 0x0);
+  assert(page_ref(p1) == 1);
+  assert(page_ref(p2) == 0);
 
-    page_remove(boot_pgdir, PGSIZE);
-    assert(page_ref(p1) == 0);
-    assert(page_ref(p2) == 0);
+  page_remove(boot_pgdir, PGSIZE);
+  assert(page_ref(p1) == 0);
+  assert(page_ref(p2) == 0);
 
-    assert(page_ref(pa2page(boot_pgdir[0])) == 1);
-    free_page(pa2page(boot_pgdir[0]));
-    boot_pgdir[0] = 0;
+  assert(page_ref(pa2page(boot_pgdir[0])) == 1);
+  free_page(pa2page(boot_pgdir[0]));
+  boot_pgdir[0] = 0;
 
-    cprintf("check_pgdir() succeeded!\n");
+  cprintf("check_pgdir() succeeded!\n");
 }
 
 static void
 check_boot_pgdir(void) {
-    pte_t *ptep;
-    int i;
-    //assert(PDE_ADDR(boot_pgdir[PDX(VPT)]) == PADDR(boot_pgdir));
+  pte_t *ptep;
+  int i;
+  //assert(PDE_ADDR(boot_pgdir[PDX(VPT)]) == PADDR(boot_pgdir));
 
-    assert(boot_pgdir[0] == 0);
-    struct Page *p;
-    p = alloc_page();
-    *(int*)(page2kva(p) + 0x100) = 0x1234;
-    //printhex(page2kva(p));
-    //cprintf("\n");
-    //printhex(*(int*)(page2kva(p)+0x100));
+  assert(boot_pgdir[0] == 0);
+  struct Page *p;
+  p = alloc_page();
+  *(int*)(page2kva(p) + 0x100) = 0x1234;
+  //printhex(page2kva(p));
+  //cprintf("\n");
+  //printhex(*(int*)(page2kva(p)+0x100));
 
-    assert(page_insert(boot_pgdir, p, 0x100, PTE_W) == 0);
-    assert(page_ref(p) == 1);
-    assert(page_insert(boot_pgdir, p, 0x100 + PGSIZE, PTE_W) == 0);
-    assert(page_ref(p) == 2);
+  assert(page_insert(boot_pgdir, p, 0x100, PTE_W) == 0);
+  assert(page_ref(p) == 1);
+  assert(page_insert(boot_pgdir, p, 0x100 + PGSIZE, PTE_W) == 0);
+  assert(page_ref(p) == 2);
 
-    //cprintf("\nHERE\n");
+  //cprintf("\nHERE\n");
 
-    assert(*(int*)0x100 == 0x1234);
-    const char *str = "ucore: Hello world!!";
-    strcpy((void *)0x100, str);
-    assert(strcmp((void *)0x100, (void *)(0x100 + PGSIZE)) == 0);
+  assert(*(int*)0x100 == 0x1234);
+  const char *str = "ucore: Hello world!!";
+  strcpy((void *)0x100, str);
+  assert(strcmp((void *)0x100, (void *)(0x100 + PGSIZE)) == 0);
 
-    *(char *)(page2kva(p) + 0x100) = '\0';
-    assert(strlen((const char *)0x100) == 0);
+  *(char *)(page2kva(p) + 0x100) = '\0';
+  assert(strlen((const char *)0x100) == 0);
 
-    free_page(p);
-    free_page(pa2page(PDE_ADDR(boot_pgdir[0])));
-    boot_pgdir[0] = 0;
-    tlb_invalidate_all();
+  free_page(p);
+  free_page(pa2page(PDE_ADDR(boot_pgdir[0])));
+  boot_pgdir[0] = 0;
+  tlb_invalidate_all();
 
     cprintf("check_boot_pgdir() succeeded!\n");
 }

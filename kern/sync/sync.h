@@ -8,7 +8,7 @@
 
 static inline bool
 __intr_save(void) {
-  if (read_c0_status() & ST0_IE) {
+  if (!(read_c0_status() & ST0_IE)) {
     return 0;
   }
   intr_disable();

@@ -6,6 +6,39 @@ struct pushregs {
  uint32_t reg_r[30];
 };
 
+#define MIPS_REG_START  (0)
+#define MIPS_REG_AT    (MIPS_REG_START+0)
+#define MIPS_REG_V0    (MIPS_REG_START+1)
+#define MIPS_REG_V1    (MIPS_REG_START+2)
+#define MIPS_REG_A0    (MIPS_REG_START+3)
+#define MIPS_REG_A1    (MIPS_REG_START+4)
+#define MIPS_REG_A2    (MIPS_REG_START+5)
+#define MIPS_REG_A3    (MIPS_REG_START+6)
+#define MIPS_REG_T0    (MIPS_REG_START+7)
+#define MIPS_REG_T1    (MIPS_REG_START+8)
+#define MIPS_REG_T2    (MIPS_REG_START+9)
+#define MIPS_REG_T3    (MIPS_REG_START+10)
+#define MIPS_REG_T4    (MIPS_REG_START+11)
+#define MIPS_REG_T5    (MIPS_REG_START+12)
+#define MIPS_REG_T6    (MIPS_REG_START+13)
+#define MIPS_REG_T7    (MIPS_REG_START+14)
+
+#define MIPS_REG_S0    (MIPS_REG_START+15)
+#define MIPS_REG_S1    (MIPS_REG_START+16)
+#define MIPS_REG_S2    (MIPS_REG_START+17)
+#define MIPS_REG_S3    (MIPS_REG_START+18)
+#define MIPS_REG_S4    (MIPS_REG_START+19)
+#define MIPS_REG_S5    (MIPS_REG_START+20)
+#define MIPS_REG_S6    (MIPS_REG_START+21)
+#define MIPS_REG_S7    (MIPS_REG_START+22)
+
+#define MIPS_REG_T8    (MIPS_REG_START+23)
+#define MIPS_REG_T9    (MIPS_REG_START+24)
+
+#define MIPS_REG_GP    (MIPS_REG_START+27)
+#define MIPS_REG_SP    (MIPS_REG_START+28)
+#define MIPS_REG_FP    (MIPS_REG_START+29)
+
 /*
  * Structure describing what is saved on the stack during entry to
  * the exception handler.
