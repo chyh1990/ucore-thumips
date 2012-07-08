@@ -742,10 +742,10 @@ kernel_execve(const char *name, unsigned char *binary, size_t size) {
         })
 
 #define KERNEL_EXECVE(x) ({                                             \
-            extern unsigned char _binary_obj___user_##x##_out_start[],  \
-                _binary_obj___user_##x##_out_size[];                    \
-            __KERNEL_EXECVE(#x, _binary_obj___user_##x##_out_start,     \
-                            _binary_obj___user_##x##_out_size);         \
+            extern unsigned char _binary_obj_user_##x##_start[],  \
+                _binary_obj_user_##x##_size[];                    \
+            __KERNEL_EXECVE(#x, _binary_obj_user_##x##_start,     \
+                            _binary_obj_user_##x##_size);         \
         })
 
 #define __KERNEL_EXECVE2(x, xstart, xsize) ({                           \
@@ -758,13 +758,7 @@ kernel_execve(const char *name, unsigned char *binary, size_t size) {
 // user_main - kernel thread used to exec a user program
 static int
 user_main(void *arg) {
-#if 0
-#ifdef TEST
-    KERNEL_EXECVE2(TEST, TESTSTART, TESTSIZE);
-#else
-    KERNEL_EXECVE(exit);
-#endif
-#endif
+    KERNEL_EXECVE(hello);
     panic("user_main execve failed.\n");
 }
 

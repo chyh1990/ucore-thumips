@@ -21,11 +21,12 @@ GDB		:= $(GCCPREFIX)gdb
 THUMIPSCC		:= ./thumips-cc
 CLANG := clang
 CC :=$(GCCPREFIX)gcc
-CFLAGS	:= -fno-builtin -nostdlib  -nostdinc -g -EL -G0 -fno-delayed-branch
+CFLAGS	:=  -fno-builtin -nostdlib  -nostdinc -g  -EL -G0 -fno-delayed-branch -Wa,-O0
 CTYPE	:= c S
 
 LD      := $(GCCPREFIX)ld
 AS      := $(GCCPREFIX)as -EL -g -mips32
+AR      := $(GCCPREFIX)ar
 LDFLAGS	+= -nostdlib
 
 OBJCOPY := $(GCCPREFIX)objcopy
@@ -63,6 +64,24 @@ OBJ       += $(patsubst $(SRCDIR)/%.S, $(OBJDIR)/%.o, $(ASMSRC))
 INCLUDES  := $(addprefix -I,$(SRC_DIR))
 INCLUDES  += -I$(SRCDIR)/include
 
+USER_APPLIST:= badarg hello
+USER_SRCDIR := user
+USER_OBJDIR := $(OBJDIR)/$(USER_SRCDIR)
+USER_LIB_OBJDIR := $(USER_OBJDIR)/libs
+USER_INCLUDE := -I$(USER_SRCDIR)/libs
+
+USER_APP_BINS:= $(addprefix $(USER_OBJDIR)/, $(USER_APPLIST))
+
+USER_LIB_SRCDIR := $(USER_SRCDIR)/libs
+USER_LIB_SRC := $(foreach sdir,$(USER_LIB_SRCDIR),$(wildcard $(sdir)/*.c))
+USER_LIB_OBJ := $(patsubst $(USER_LIB_SRCDIR)/%.c, $(USER_LIB_OBJDIR)/%.o, $(USER_LIB_SRC))
+USER_LIB_OBJ += $(USER_LIB_OBJDIR)/initcode.o
+USER_LIB    := $(USER_OBJDIR)/libuser.a
+
+BUILD_DIR   += $(USER_LIB_OBJDIR)
+BUILD_DIR   += $(USER_OBJDIR)
+
+
 DEPENDS := $(patsubst $(SRCDIR)/%.c, $(DEPDIR)/%.d, $(SRC))
 
 MAKEDEPEND = $(CLANG) -M $(CFLAGS) $(INCLUDES) -o $(DEPDIR)/$*.d $<
@@ -77,8 +96,13 @@ $(shell mkdir -p $(DEP_DIR))
 
 
 obj/ucore-kernel:   $(OBJ) tools/kernel.ld
-	@echo LINK
+	@echo LINK $@
 	$(LD) -nostdlib -n -G 0 -static -T tools/kernel.ld $(OBJ) -o $@
+
+obj/ucore-kernel-piggy: $(BUILD_DIR)  $(OBJ) $(USER_APP_BINS) tools/kernel.ld
+	@echo LINK $@
+	$(LD) -nostdlib -n -G 0 -static -T tools/kernel.ld $(OBJ) \
+					$(addsuffix .piggy.o, $(USER_APP_BINS)) -o $@
 
 $(DEPDIR)/%.d: $(SRCDIR)/%.c
 	@echo DEP $<
@@ -86,10 +110,10 @@ $(DEPDIR)/%.d: $(SRCDIR)/%.c
 		$(CC) -MM -MT "$(OBJDIR)/$*.o $@" $(CFLAGS) $(INCLUDES) $< > $@; 
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.c
-	$(CC) -c  $(INCLUDES) $(CFLAGS)  $<  -o $@
+	$(CC) -c -mips1 $(INCLUDES) $(CFLAGS)  $<  -o $@
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.S
-	$(CC) -mips32 -c -D__ASSEMBLY__ $(INCLUDES) $(CFLAGS)  $<  -o $@
+	$(CC) -mips32 -c -D__ASSEMBLY__ $(INCLUDES) -g -EL -G0  $<  -o $@
 
 checkdirs: $(BUILD_DIR) $(DEP_DIR)
 
@@ -108,6 +132,27 @@ ifneq ($(MAKECMDGOALS),clean)
 -include $(DEPENDS)
 endif
 
+#user lib
 
+$(USER_LIB): $(BUILD_DIR) $(USER_LIB_OBJ)
+	@echo "Building USERLIB"
+	$(AR) rcs $@ $(USER_LIB_OBJ)
+
+#user applications
+    #$(CC) $(INCLUDES)  $$< -o $$@
+define make-user-app
+$1: $(BUILD_DIR) $(addsuffix .o,$1) $(USER_LIB)
+	@echo LINK $$@
+	$(LD) -T $(USER_LIB_SRCDIR)/user.ld $(addsuffix .o,$1) $(USER_LIB) -o $$@
+	$(OBJCOPY) -O elf32-tradlittlemips -I binary -B mips $$@  $$@.piggy.o
+endef
+
+$(foreach bdir,$(USER_APP_BINS),$(eval $(call make-user-app,$(bdir))))
+
+$(USER_OBJDIR)/%.o: $(USER_SRCDIR)/%.c
+	$(CC) -c -mips1 $(INCLUDES) $(USER_INCLUDE) $(CFLAGS)  $<  -o $@
+
+$(USER_OBJDIR)/%.o: $(USER_SRCDIR)/%.S
+	$(CC) -mips32 -c -D__ASSEMBLY__ $(USER_INCLUDE) -g -EL -G0  $<  -o $@
 
 
