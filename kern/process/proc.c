@@ -438,6 +438,8 @@ do_exit(int error_code) {
     }
     current->state = PROC_ZOMBIE;
     current->exit_code = error_code;
+
+    tlb_invalidate_all();
 	
     bool intr_flag;
     struct proc_struct *proc;
@@ -788,7 +790,7 @@ kernel_execve(const char *name, unsigned char *binary, size_t size) {
 // user_main - kernel thread used to exec a user program
 static int
 user_main(void *arg) {
-    KERNEL_EXECVE(faultread);
+    KERNEL_EXECVE(hello);
     panic("user_main execve failed.\n");
 }
 
@@ -815,7 +817,6 @@ init_main(void *arg) {
     assert(nr_free_pages_store == nr_free_pages());
     assert(slab_allocated_store == kallocated());
     kprintf("init check memory pass.\n");
-    panic("shutdown");
     return 0;
 }
 
