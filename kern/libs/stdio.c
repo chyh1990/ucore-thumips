@@ -17,54 +17,54 @@ cputch(int c, int *cnt) {
 }
 #if 0
 /* *
- * cprintf - formats a string and writes it to stdout
+ * kprintf - formats a string and writes it to stdout
  *
  * The return value is the number of characters which would be
  * written to stdout.
  * */
 int
-cprintf(const char *str) {
+kprintf(const char *str) {
     int cnt = 0;
     while(*str){
-      cputchar(*str);
+      kputchar(*str);
       cnt++;
       str++;
     }
     //va_start(ap, fmt);
-    //cnt = vcprintf(fmt, ap);
+    //cnt = vkprintf(fmt, ap);
     //va_end(ap);
     return cnt;
 }
 #endif
 
 /* *
- * vcprintf - format a string and writes it to stdout
+ * vkprintf - format a string and writes it to stdout
  *
  * The return value is the number of characters which would be
  * written to stdout.
  *
  * Call this function if you are already dealing with a va_list.
- * Or you probably want cprintf() instead.
+ * Or you probably want kprintf() instead.
  * */
 int
-vcprintf(const char *fmt, va_list ap) {
+vkprintf(const char *fmt, va_list ap) {
     int cnt = 0;
     vprintfmt((void*)cputch, NO_FD, &cnt, fmt, ap);
     return cnt;
 }
 
 /* *
- * cprintf - formats a string and writes it to stdout
+ * kprintf - formats a string and writes it to stdout
  *
  * The return value is the number of characters which would be
  * written to stdout.
  * */
 int
-cprintf(const char *fmt, ...) {
+kprintf(const char *fmt, ...) {
     va_list ap;
     int cnt;
     va_start(ap, fmt);
-    cnt = vcprintf(fmt, ap);
+    cnt = vkprintf(fmt, ap);
     va_end(ap);
     return cnt;
 }
@@ -79,7 +79,7 @@ void printhex(unsigned int x){
     tmp[i] = hexdigits[x & 0xf];
     x = x >> 4;
   }
-  cprintf(tmp);
+  kprintf(tmp);
 }
 
 
@@ -89,7 +89,7 @@ void printbase10(int x){
   int i = 0;
   char buf[16];
   if(x<0)
-    cputchar('-');
+    kputchar('-');
   x = (x<0)?-x:x;
   while(x >= 10){
     t = __divu10(x); 
@@ -98,22 +98,22 @@ void printbase10(int x){
   }
   buf[i] = ('0'+x);
   for(;i>=0;i--){
-    cputchar(buf[i]);
+    kputchar(buf[i]);
   }
 }
 
-/* cputchar - writes a single character to stdout */
+/* kputchar - writes a single character to stdout */
 void
-cputchar(int c) {
+kputchar(int c) {
   cons_putc(c);
 }
 
 /* *
- * cputs- writes the string pointed by @str to stdout and
+ * kputs- writes the string pointed by @str to stdout and
  * appends a newline character.
  * */
 int
-cputs(const char *str) {
+kputs(const char *str) {
     int cnt = 0;
     char c;
     while ((c = *str ++) != '\0') {

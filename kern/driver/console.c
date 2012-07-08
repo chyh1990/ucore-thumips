@@ -149,7 +149,7 @@ cons_init(void) {
     serial_init();
     //cons.rpos = cons.wpos = 0;
     if (!serial_exists) {
-        cprintf("serial port does not exist!!\n");
+        kprintf("serial port does not exist!!\n");
     }
 }
 

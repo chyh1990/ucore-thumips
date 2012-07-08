@@ -24,7 +24,7 @@ static char buf[BUFSIZE];
 char *
 readline(const char *prompt) {
     if (prompt != NULL) {
-        cprintf(prompt);
+        kprintf(prompt);
     }
     int i = 0, c;
     while (1) {
@@ -33,15 +33,15 @@ readline(const char *prompt) {
             return NULL;
         }
         else if (c >= ' ' && i < BUFSIZE - 1) {
-            cputchar(c);
+            kputchar(c);
             buf[i ++] = c;
         }
         else if (c == '\b' && i > 0) {
-            cputchar(c);
+            kputchar(c);
             i --;
         }
         else if (c == '\n' || c == '\r') {
-            cputchar(c);
+            kputchar(c);
             buf[i] = '\0';
             return buf;
         }

@@ -54,7 +54,7 @@ sys_getpid(uint32_t arg[]) {
 static int
 sys_putc(uint32_t arg[]) {
     int c = (int)arg[0];
-    cputchar(c);
+    kputchar(c);
     return 0;
 }
 

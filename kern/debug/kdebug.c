@@ -20,22 +20,22 @@
 void
 print_kerninfo(void) {
     extern char etext[], edata[], end[], kern_init[];
-    cprintf("Special kernel symbols:\n");
-    cprintf("  entry  0x");
+    kprintf("Special kernel symbols:\n");
+    kprintf("  entry  0x");
     printhex((unsigned int)kern_init);
-    cprintf(" (phys)\n");
-    cprintf("  etext\t0x");
+    kprintf(" (phys)\n");
+    kprintf("  etext\t0x");
     printhex((unsigned int)etext);
-    cprintf(" (phys)\n");
-    cprintf("  edata\t0x");
+    kprintf(" (phys)\n");
+    kprintf("  edata\t0x");
     printhex((unsigned int)edata);
-    cprintf(" (phys)\n");
-    cprintf("  end\t0x");
+    kprintf(" (phys)\n");
+    kprintf("  end\t0x");
     printhex((unsigned int)end);
-    cprintf(" (phys)\n");
-    cprintf("Kernel executable memory footprint: ");
+    kprintf(" (phys)\n");
+    kprintf("Kernel executable memory footprint: ");
     printbase10( (end - etext + 1023)>>10 );
-    cprintf("KB\n");
+    kprintf("KB\n");
 }
 
 /* *

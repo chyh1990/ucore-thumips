@@ -159,6 +159,8 @@ common_exception:
    sw   k0, 24(sp)               /* k0 was loaded with cause earlier */
    mfc0 t1, CP0_STATUS /* Copr.0 reg 11 == status */
    sw   t1, 20(sp)
+
+
    mfc0 t2, CP0_BADVADDR /* Copr.0 reg 8 == faulting vaddr */
    sw   t2, 16(sp)
 
@@ -166,7 +168,12 @@ common_exception:
     * Pretend to save $0 for gdb's benefit.
     */
    sw $0, 12(sp)
-   
+
+  # support nested interrput
+  la   t0, ~ST0_KSU
+  and t1, t1, t0
+  mtc0 t1, CP0_STATUS /* Copr.0 reg 11 == status */
+
    /*
     * Prepare to call mips_trap(struct trapframe *)
     */

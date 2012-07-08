@@ -261,7 +261,7 @@ check_vmm(void) {
 
   assert(nr_free_pages_store == nr_free_pages());
 
-  cprintf("check_vmm() succeeded.\n");
+  kprintf("check_vmm() succeeded.\n");
 }
 
 static void
@@ -309,7 +309,7 @@ check_vma_struct(void) {
 
   assert(nr_free_pages_store == nr_free_pages());
 
-  cprintf("check_vma_struct() succeeded!\n");
+  kprintf("check_vma_struct() succeeded!\n");
 }
 
 struct mm_struct *check_mm_struct;
@@ -354,7 +354,7 @@ check_pgfault(void) {
 
   assert(nr_free_pages_store == nr_free_pages());
 
-  cprintf("check_pgfault() succeeded!\n");
+  kprintf("check_pgfault() succeeded!\n");
 }
 
 
@@ -366,11 +366,11 @@ int
 do_pgfault(struct mm_struct *mm, uint32_t error_code, uintptr_t addr) {
   int ret = -E_INVAL;
   struct vma_struct *vma = find_vma(mm, addr);
-  //cprintf("## %08x %08x\n", error_code, addr);
+  //kprintf("## %08x %08x\n", error_code, addr);
 
   pgfault_num++;
   if (vma == NULL || vma->vm_start > addr) {
-    cprintf("not valid addr %x, and  can not find it in vma\n", addr);
+    kprintf("not valid addr %x, and  can not find it in vma\n", addr);
     goto failed;
   }
 
@@ -379,21 +379,21 @@ do_pgfault(struct mm_struct *mm, uint32_t error_code, uintptr_t addr) {
       /* default is 3: write, present */
     case 2: /* write, not present */
       if (!(vma->vm_flags & VM_WRITE)) {
-        cprintf("write, not present in do_pgfault failed\n");
+        kprintf("write, not present in do_pgfault failed\n");
         goto failed;
       }
       break;
     case 1: /* read, present */
-      cprintf("read, present in do_pgfault failed\n");
+      kprintf("read, present in do_pgfault failed\n");
       goto failed;
     case 0: /* read, not present */
       if (!(vma->vm_flags & (VM_READ | VM_EXEC))) {
-        cprintf("read, not present in do_pgfault failed\n");
+        kprintf("read, not present in do_pgfault failed\n");
         goto failed;
       }
   }
 
-  //cprintf("## check OK\n");
+  //kprintf("## check OK\n");
 
   uint32_t perm = PTE_U;
   if (vma->vm_flags & VM_WRITE) {
@@ -422,7 +422,7 @@ do_pgfault(struct mm_struct *mm, uint32_t error_code, uintptr_t addr) {
       panic("No swap!! never reach!!"); 
     }
     else {
-      cprintf("no swap_init_ok but ptep is %x, failed\n",*ptep);
+      kprintf("no swap_init_ok but ptep is %x, failed\n",*ptep);
       goto failed;
     }
   }

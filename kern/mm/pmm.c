@@ -42,9 +42,9 @@ void lcr3(uintptr_t cr3)
 static void
 init_pmm_manager(void) {
     pmm_manager = &buddy_pmm_manager;
-    cprintf("memory management: ");
-      cprintf(pmm_manager->name);
-      cprintf("\n");
+    kprintf("memory management: ");
+      kprintf(pmm_manager->name);
+      kprintf("\n");
     pmm_manager->init();
 }
 
@@ -99,12 +99,12 @@ page_init(void) {
   int i;
 
   //panic("unimpl");
-  cprintf("memory map:\n");
-  cprintf("    [");
+  kprintf("memory map:\n");
+  kprintf("    [");
   printhex(KERNBASE);
-  cprintf(", ");
+  kprintf(", ");
   printhex(KERNTOP);
-  cprintf("]\n\n");
+  kprintf("]\n\n");
 
   maxpa = KERNTOP;
   npage = KMEMSIZE >> PGSHIFT;
@@ -232,14 +232,14 @@ get_pte(pde_t *pgdir, uintptr_t la, bool create) {
 		uintptr_t pa = (uintptr_t)page2kva(new_pte); // get linear address of page
 		// clear page content using memset
     memset((void*)pa, 0, PGSIZE);
-    //cprintf("@@@ %x\n", pa);
+    //kprintf("@@@ %x\n", pa);
 		// set page directory entry's permission
     *pdep = PADDR(pa);
     (*pdep) |= (PTE_U|PTE_P|PTE_W);
 	}
   pte_t *ret = (pte_t*)KADDR((uintptr_t)((pte_t*)(PDE_ADDR(*pdep))+PTX(la)));
 
-  //cprintf("@@GET_PTE %x %x %x\n", *pdep, ret, *ret);
+  //kprintf("@@GET_PTE %x %x %x\n", *pdep, ret, *ret);
 	return  ret;// return page table entry
 }
 
@@ -337,7 +337,7 @@ pgdir_alloc_page(pde_t *pgdir, uintptr_t la, uint32_t perm) {
 static void
 check_alloc_page(void) {
   pmm_manager->check();
-  cprintf("check_alloc_page() succeeded!\n");
+  kprintf("check_alloc_page() succeeded!\n");
 }
 
 static void
@@ -385,7 +385,7 @@ check_pgdir(void) {
   free_page(pa2page(boot_pgdir[0]));
   boot_pgdir[0] = 0;
 
-  cprintf("check_pgdir() succeeded!\n");
+  kprintf("check_pgdir() succeeded!\n");
 }
 
 static void
@@ -399,7 +399,7 @@ check_boot_pgdir(void) {
   p = alloc_page();
   *(int*)(page2kva(p) + 0x100) = 0x1234;
   //printhex(page2kva(p));
-  //cprintf("\n");
+  //kprintf("\n");
   //printhex(*(int*)(page2kva(p)+0x100));
 
   assert(page_insert(boot_pgdir, p, 0x100, PTE_W) == 0);
@@ -407,7 +407,7 @@ check_boot_pgdir(void) {
   assert(page_insert(boot_pgdir, p, 0x100 + PGSIZE, PTE_W) == 0);
   assert(page_ref(p) == 2);
 
-  //cprintf("\nHERE\n");
+  //kprintf("\nHERE\n");
 
   assert(*(int*)0x100 == 0x1234);
   const char *str = "ucore: Hello world!!";
@@ -422,7 +422,7 @@ check_boot_pgdir(void) {
   boot_pgdir[0] = 0;
   tlb_invalidate_all();
 
-    cprintf("check_boot_pgdir() succeeded!\n");
+    kprintf("check_boot_pgdir() succeeded!\n");
 }
 
 //perm2str - use string 'u,r,w,-' to present the permission
@@ -471,14 +471,14 @@ get_pgtable_items(size_t left, size_t right, size_t start, uintptr_t *table, siz
     return 0;
 }
 
-#define PRINT_PTE(s0, a0,a1,a2,a3,s1) cprintf(s0);printhex(a0);\
-  cprintf(") ");printhex(a1);cprintf("-");printhex(a2);cprintf(" ");\
-  printhex(a3);cprintf(" ");cprintf(s1);cprintf("\n");
+#define PRINT_PTE(s0, a0,a1,a2,a3,s1) kprintf(s0);printhex(a0);\
+  kprintf(") ");printhex(a1);kprintf("-");printhex(a2);kprintf(" ");\
+  printhex(a3);kprintf(" ");kprintf(s1);kprintf("\n");
 //print_pgdir - print the PDT&PT
 void
 print_pgdir(void) {
   size_t left, right = 0, perm;
-    cprintf("-------------------- BEGIN --------------------\n");
+    kprintf("-------------------- BEGIN --------------------\n");
   while ((perm = get_pgtable_items(0, NPDEENTRY, right, boot_pgdir, &left, &right)) != 0) {
     PRINT_PTE("PDE(", right - left,
         left * PTSIZE, right * PTSIZE, (right - left) * PTSIZE, perm2str(perm));
@@ -502,7 +502,7 @@ print_pgdir(void) {
       }
     }
   }
-    cprintf("--------------------- END ---------------------\n");
+    kprintf("--------------------- END ---------------------\n");
 }
 
 

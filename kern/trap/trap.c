@@ -59,11 +59,11 @@ void print_regs(struct pushregs *regs)
 {
   int i;
   for (i = 0; i < 30; i++) {
-    cprintf(" $");
+    kprintf(" $");
     printbase10(i+1);
-    cprintf("\t: ");
+    kprintf("\t: ");
     printhex(regs->reg_r[i]);
-    cputchar('\n');
+    kputchar('\n');
   }
 }
 
@@ -77,12 +77,12 @@ print_trapframe(struct trapframe *tf) {
     PRINT_HEX(" Cause\t: ", tf->tf_cause);
     PRINT_HEX(" EPC\t: ", tf->tf_epc);
     if (!trap_in_kernel(tf)) {
-      cprintf("Trap in usermode: ");
+      kprintf("Trap in usermode: ");
     }else{
-      cprintf("Trap in kernel: ");
+      kprintf("Trap in kernel: ");
     }
-    cprintf(trapname(GET_CAUSE_EXCODE(tf->tf_cause)));
-    cputchar('\n');
+    kprintf(trapname(GET_CAUSE_EXCODE(tf->tf_cause)));
+    kputchar('\n');
 }
 
 static void interrupt_handler(struct trapframe *tf)
@@ -163,7 +163,7 @@ static void handle_tlbmiss(struct trapframe* tf, int write)
 
   static int entercnt = 0;
   entercnt ++;
-  cprintf("## enter handle_tlbmiss %d times\n", entercnt);
+  kprintf("## enter handle_tlbmiss %d times\n", entercnt);
   int in_kernel = trap_in_kernel(tf);
   assert(current_pgdir != NULL);
   //print_trapframe(tf);
@@ -182,7 +182,7 @@ static void handle_tlbmiss(struct trapframe* tf, int write)
     /* check permission */
     if(in_kernel){
       tlb_refill(badaddr, pte); 
-    cprintf("## refill K\n");
+    kprintf("## refill K\n");
       return;
     }else{
       if(!ptep_u_read(pte)){
@@ -193,7 +193,7 @@ static void handle_tlbmiss(struct trapframe* tf, int write)
         ret = -2;
         goto exit;
       }
-    cprintf("## refill U %d %08x\n", write, badaddr);
+    kprintf("## refill U %d %08x\n", write, badaddr);
       tlb_refill(badaddr, pte);
       return ;
     }
@@ -202,7 +202,11 @@ static void handle_tlbmiss(struct trapframe* tf, int write)
 exit:
   if(ret){
     print_trapframe(tf);
-    panic("unhandled pgfault");
+    if(in_kernel){
+      panic("unhandled pgfault");
+    }else{
+      do_exit(-E_KILLED);
+    }
   }
   return ;
 }

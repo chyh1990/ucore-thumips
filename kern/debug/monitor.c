@@ -47,7 +47,7 @@ parse(char *buf, char **argv) {
 
         // save and scan past next arg
         if (argc == MAXARGS - 1) {
-            cprintf("Too many arguments.\n" );
+            kprintf("Too many arguments.\n" );
         }
         argv[argc ++] = buf;
         while (*buf != '\0' && strchr(WHITESPACE, *buf) == NULL) {
@@ -74,9 +74,9 @@ runcmd(char *buf, struct trapframe *tf) {
             return commands[i].func(argc - 1, argv + 1, tf);
         }
     }
-    cprintf("Unknown command '");
-    cprintf(argv[0]);
-    cprintf("'\n");
+    kprintf("Unknown command '");
+    kprintf(argv[0]);
+    kprintf("'\n");
     return 0;
 }
 
@@ -84,8 +84,8 @@ runcmd(char *buf, struct trapframe *tf) {
 
 void
 monitor(struct trapframe *tf) {
-    cprintf("Welcome to the kernel debug monitor!!\n");
-    cprintf("Type 'help' for a list of commands.\n");
+    kprintf("Welcome to the kernel debug monitor!!\n");
+    kprintf("Type 'help' for a list of commands.\n");
 
     if (tf != NULL) {
         print_trapframe(tf);
@@ -106,10 +106,10 @@ int
 mon_help(int argc, char **argv, struct trapframe *tf) {
     int i;
     for (i = 0; i < NCOMMANDS; i ++) {
-        cprintf(commands[i].name);
-        cprintf(" - ");
-        cprintf(commands[i].desc);
-        cprintf("\n");
+        kprintf(commands[i].name);
+        kprintf(" - ");
+        kprintf(commands[i].desc);
+        kprintf("\n");
     }
     return 0;
 }

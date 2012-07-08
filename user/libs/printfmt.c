@@ -15,6 +15,7 @@
  * so that -E_NO_MEM and E_NO_MEM are equivalent.
  * */
 
+#if 0
 static const char * const error_string[MAXERROR + 1] = {
     [0]                     NULL,
     [E_UNSPECIFIED]         "unspecified error",
@@ -39,7 +40,7 @@ static const char * const error_string[MAXERROR + 1] = {
     [E_EXISTS]              "file or directory already exists",
     [E_NOTEMPTY]            "directory is not empty",
 };
-
+#endif
 
 
 /* *
@@ -88,7 +89,7 @@ getint(va_list *ap, int lflag) {
  * @padc:       character that padded on the left if the actual width is less than @width
  * */
 static void
-printnum(void (*putch)(int, void*, int), int fd, void *putdat,
+printnum(void (*putch)(int, int*, int), int fd, void *putdat,
         unsigned int num, unsigned int base, int width, int padc) {
     unsigned int result = num;
     unsigned int mod = 0;
@@ -131,10 +132,10 @@ printnum(void (*putch)(int, void*, int), int fd, void *putdat,
  * Or you probably want printfmt() instead.
  * */
 void
-vprintfmt(void (*putch)(int, void*, int), int fd, void *putdat, const char *fmt, va_list ap) {
-    register const char *p;
-    register int ch, err;
-    unsigned long long num;
+vprintfmt(void (*putch)(int, int*, int), int fd, void *putdat, const char *fmt, va_list ap) {
+    const char *p;
+    int ch, err;
+    unsigned long num;
     int base, width, precision, lflag, altflag;
 
     while (1) {
@@ -208,12 +209,12 @@ vprintfmt(void (*putch)(int, void*, int), int fd, void *putdat, const char *fmt,
             if (err < 0) {
                 err = -err;
             }
-            if (err > MAXERROR || (p = error_string[err]) == NULL) {
+            //if (err > MAXERROR || (p = error_string[err]) == NULL) {
                 printfmt(putch, fd, putdat, "error %d", err);
-            }
-            else {
-                printfmt(putch, fd, putdat, "%s", p);
-            }
+            //}
+            //else {
+            //    printfmt(putch, fd, putdat, "%s", p);
+            //}
             break;
 
         // string
@@ -287,7 +288,7 @@ vprintfmt(void (*putch)(int, void*, int), int fd, void *putdat, const char *fmt,
  * @fmt:        the format string to use
  * */
 void
-printfmt(void (*putch)(int, void*, int), int fd, void *putdat, const char *fmt, ...) {
+printfmt(void (*putch)(int, int*, int), int fd, void *putdat, const char *fmt, ...) {
     va_list ap;
 
     va_start(ap, fmt);

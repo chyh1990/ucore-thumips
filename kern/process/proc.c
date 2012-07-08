@@ -253,6 +253,9 @@ kernel_thread(int (*fn)(void *), void *arg, uint32_t clone_flags) {
     tf.tf_regs.reg_r[MIPS_REG_V0] = 0;
     //TODO
     tf.tf_status = read_c0_status();
+    tf.tf_status &= ~ST0_KSU;
+    tf.tf_status |= ST0_IE;
+    tf.tf_status |= ST0_EXL;
     tf.tf_regs.reg_r[MIPS_REG_GP] = __read_reg($28);
     tf.tf_epc = (uint32_t)kernel_thread_entry;
     return do_fork(clone_flags | CLONE_VM, 0, &tf);
@@ -597,13 +600,13 @@ load_icode(unsigned char *binary, size_t size) {
 #endif
     tf->tf_epc = elf->e_entry;
     tf->tf_regs.reg_r[MIPS_REG_SP] = USTACKTOP;
-    cprintf("### %08x\n", tf->tf_epc);
     uint32_t status = read_c0_status();
     status &= ~ST0_KSU;
     status |= KSU_USER;
     status |= ST0_EXL;
     tf->tf_status = status;
 
+    kprintf("## %08x\n", tf->tf_status);
     ret = 0;
 out:
     return ret;
@@ -763,7 +766,7 @@ kernel_execve(const char *name, unsigned char *binary, size_t size) {
 }
 
 #define __KERNEL_EXECVE(name, binary, size) ({                          \
-            cprintf("kernel_execve: pid = %d, name = \"%s\".\n",        \
+            kprintf("kernel_execve: pid = %d, name = \"%s\".\n",        \
                     current->pid, name);                                \
             kernel_execve(name, binary, (size_t)(size));                \
         })
@@ -785,7 +788,7 @@ kernel_execve(const char *name, unsigned char *binary, size_t size) {
 // user_main - kernel thread used to exec a user program
 static int
 user_main(void *arg) {
-    KERNEL_EXECVE(hello);
+    KERNEL_EXECVE(faultread);
     panic("user_main execve failed.\n");
 }
 
@@ -804,14 +807,15 @@ init_main(void *arg) {
         schedule();
     }
 
-    cprintf("all user-mode processes have quit.\n");
+    kprintf("all user-mode processes have quit.\n");
     assert(initproc->cptr == NULL && initproc->yptr == NULL && initproc->optr == NULL);
     assert(nr_process == 2);
     assert(list_next(&proc_list) == &(initproc->list_link));
     assert(list_prev(&proc_list) == &(initproc->list_link));
     assert(nr_free_pages_store == nr_free_pages());
     assert(slab_allocated_store == kallocated());
-    cprintf("init check memory pass.\n");
+    kprintf("init check memory pass.\n");
+    panic("shutdown");
     return 0;
 }
 

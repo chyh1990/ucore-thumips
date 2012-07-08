@@ -64,7 +64,7 @@ OBJ       += $(patsubst $(SRCDIR)/%.S, $(OBJDIR)/%.o, $(ASMSRC))
 INCLUDES  := $(addprefix -I,$(SRC_DIR))
 INCLUDES  += -I$(SRCDIR)/include
 
-USER_APPLIST:= badarg hello
+USER_APPLIST:= badarg hello faultread
 USER_SRCDIR := user
 USER_OBJDIR := $(OBJDIR)/$(USER_SRCDIR)
 USER_LIB_OBJDIR := $(USER_OBJDIR)/libs
@@ -152,7 +152,7 @@ endef
 $(foreach bdir,$(USER_APP_BINS),$(eval $(call make-user-app,$(bdir))))
 
 $(USER_OBJDIR)/%.o: $(USER_SRCDIR)/%.c
-	$(CC) -c -mips1  $(USER_INCLUDE) $(INCLUDES) $(CFLAGS)  $<  -o $@
+	$(CC) -c -mips1  $(USER_INCLUDE)  $(CFLAGS)  $<  -o $@
 
 $(USER_OBJDIR)/%.o: $(USER_SRCDIR)/%.S
 	$(CC) -mips32 -c -D__ASSEMBLY__ $(USER_INCLUDE) -g -EL -G0  $<  -o $@

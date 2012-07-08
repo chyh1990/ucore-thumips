@@ -125,7 +125,7 @@ slab_init(void) {
 inline void 
 kmalloc_init(void) {
 	slab_init();
-	cprintf("kmalloc_init() succeeded!\n");
+	kprintf("kmalloc_init() succeeded!\n");
 }
 
 //slab_allocated - summary the total size of allocated objs
@@ -653,7 +653,7 @@ check_pass:
     assert(nr_free_pages_store == nr_free_pages());
     assert(slab_allocated_store == slab_allocated());
 
-    cprintf("check_slab() succeeded!\n");
+    kprintf("check_slab() succeeded!\n");
 }
 
 

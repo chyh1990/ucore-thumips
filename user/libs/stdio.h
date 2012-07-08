@@ -5,10 +5,9 @@
 #include <stdarg.h>
 
 /* kern/libs/stdio.c */
-int vkprintf(const char *fmt, va_list ap);
-int kprintf(const char *fmt, ...);
-void kputchar(int c);
-int kputs(const char *str);
+int vcprintf(const char *fmt, va_list ap);
+int cprintf(const char *fmt, ...);
+void cputchar(int c);
 int getchar(void);
 
 void printhex(unsigned int x);
@@ -17,7 +16,6 @@ void printbase10(int x);
 /* kern/libs/readline.c */
 char *readline(const char *prompt);
 
-#define PRINT_HEX(str,x) {kprintf(str);printhex((unsigned int)x);kprintf("\n");}
 
 #endif /* !__LIBS_STDIO_H__ */
 

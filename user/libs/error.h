@@ -8,9 +8,10 @@
 #define E_NO_MEM            4   // Request failed due to memory shortage
 #define E_NO_FREE_PROC      5   // Attempt to create a new process beyond
 #define E_FAULT             6   // Memory fault
+#define E_PANIC             7
 
 /* the maximum allowed */
-#define MAXERROR            7
+#define MAXERROR            6
 
 #endif /* !__LIBS_ERROR_H__ */
 

@@ -27,23 +27,23 @@ kern_init(void) {
 
     pic_init();                 // init interrupt controller
     cons_init();                // init the console
+    clock_init();               // init clock interrupt
 
     const char *message = "(THU.CST) os is loading ...\n\n";
-    cprintf(message);
+    kprintf(message);
 
     print_kerninfo();
 
 #if 0
-    cprintf("EX\n");
+    kprintf("EX\n");
     __asm__ volatile("syscall");
-    cprintf("EX RET\n");
+    kprintf("EX RET\n");
 #endif
 
     pmm_init();                 // init physical memory management
 
     vmm_init();                 // init virtual memory management
     proc_init();                // init process table
-    clock_init();               // init clock interrupt
     intr_enable();              // enable irq interrupt
     //*(int*)(0x00124) = 0x432;
     //asm volatile("divu $1, $1, $1");

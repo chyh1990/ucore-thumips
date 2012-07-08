@@ -1,16 +1,39 @@
-#include <defs.h>
+#include <thumips.h>
+#include <unistd.h>
 #include <stdio.h>
-#include <syscall.h>
+
+/* HIGH level console I/O */
 
 /* *
  * cputch - writes a single character @c to stdout, and it will
  * increace the value of counter pointed by @cnt.
  * */
 static void
-cputch(int c, int *cnt) {
+cputch(int c, int *cnt, int fd) {
     sys_putc(c);
     (*cnt) ++;
 }
+#if 0
+/* *
+ * cprintf - formats a string and writes it to stdout
+ *
+ * The return value is the number of characters which would be
+ * written to stdout.
+ * */
+int
+cprintf(const char *str) {
+    int cnt = 0;
+    while(*str){
+      kputchar(*str);
+      cnt++;
+      str++;
+    }
+    //va_start(ap, fmt);
+    //cnt = vcprintf(fmt, ap);
+    //va_end(ap);
+    return cnt;
+}
+#endif
 
 /* *
  * vcprintf - format a string and writes it to stdout
@@ -24,7 +47,7 @@ cputch(int c, int *cnt) {
 int
 vcprintf(const char *fmt, va_list ap) {
     int cnt = 0;
-    vprintfmt((void*)cputch, &cnt, fmt, ap);
+    vprintfmt(cputch, NO_FD, &cnt, fmt, ap);
     return cnt;
 }
 
@@ -37,16 +60,54 @@ vcprintf(const char *fmt, va_list ap) {
 int
 cprintf(const char *fmt, ...) {
     va_list ap;
-
+    int cnt;
     va_start(ap, fmt);
-    int cnt = vcprintf(fmt, ap);
+    cnt = vcprintf(fmt, ap);
     va_end(ap);
-
     return cnt;
 }
 
+
+static const char* hexdigits = "0123456789ABCDEF";
+void printhex(unsigned int x){
+  char tmp[9];
+  int i=0;
+  tmp[8] = 0;
+  for(i=7;i>=0;i--){
+    tmp[i] = hexdigits[x & 0xf];
+    x = x >> 4;
+  }
+  cprintf(tmp);
+}
+
+
+/* cputchar - writes a single character to stdout */
+void
+cputchar(int c) {
+  sys_putc(c);
+}
+
+void printbase10(int x){
+  unsigned int t;
+  int i = 0;
+  char buf[16];
+  if(x<0)
+    cputchar('-');
+  x = (x<0)?-x:x;
+  while(x >= 10){
+    t = __divu10(x); 
+    buf[i++] = ('0'+(x-__mulu10(t)));
+    x = t;
+  }
+  buf[i] = ('0'+x);
+  for(;i>=0;i--){
+    cputchar(buf[i]);
+  }
+}
+
+
 /* *
- * cputs- writes the string pointed by @str to stdout and
+ * kputs- writes the string pointed by @str to stdout and
  * appends a newline character.
  * */
 int
@@ -54,9 +115,20 @@ cputs(const char *str) {
     int cnt = 0;
     char c;
     while ((c = *str ++) != '\0') {
-        cputch(c, &cnt);
+        cputch(c, &cnt,0);
     }
-    cputch('\n', &cnt);
+    cputch('\n', &cnt,0);
     return cnt;
 }
 
+#if 0
+/* getchar - reads a single non-zero character from stdin */
+int
+getchar(void) {
+    int c;
+    while ((c = cons_getc()) == 0)
+        /* do nothing */;
+    return c;
+}
+
+#endif

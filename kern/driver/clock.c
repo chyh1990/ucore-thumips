@@ -29,6 +29,6 @@ void
 clock_init(void) {
   reload_timer(); 
   pic_enable(TIMER0_IRQ);
-  cprintf("++TODO setup timer interrupts\n");
+  kprintf("++setup timer interrupts\n");
 }
 
