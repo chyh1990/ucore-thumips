@@ -199,7 +199,8 @@ proc_run(struct proc_struct *proc) {
           //panic("unimpl");
             current = proc;
             //load_sp(next->kstack + KSTACKSIZE);
-            //lcr3(next->cr3);
+            lcr3(next->cr3);
+            tlb_invalidate_all();
             switch_to(&(prev->context), &(next->context));
         }
         local_intr_restore(intr_flag);
@@ -353,6 +354,8 @@ copy_thread(struct proc_struct *proc, uintptr_t esp, struct trapframe *tf) {
     proc->tf = (struct trapframe *)(proc->kstack + KSTACKSIZE) - 1;
     *(proc->tf) = *tf;
     //proc->tf->tf_regs.reg_eax = 0;
+    if(esp == 0)
+      esp = proc->kstack - PGSIZE;
     proc->tf->tf_regs.reg_r[MIPS_REG_SP] = esp;
     proc->context.sf_ra = (uintptr_t)forkret;
     proc->context.sf_sp = (uintptr_t)(proc->tf);
@@ -388,8 +391,6 @@ do_fork(uint32_t clone_flags, uintptr_t stack, struct trapframe *tf) {
         goto bad_fork_cleanup_kstack;
     }
 
-    if(stack == 0)
-      stack = proc->kstack;
     copy_thread(proc, (uint32_t)stack, tf);
 
     proc->pid = get_pid();
@@ -439,7 +440,6 @@ do_exit(int error_code) {
     current->state = PROC_ZOMBIE;
     current->exit_code = error_code;
 
-    tlb_invalidate_all();
 	
     bool intr_flag;
     struct proc_struct *proc;
@@ -671,6 +671,7 @@ do_yield(void) {
 // NOTE: only after do_wait function, all resources of the child proces are free.
 int
 do_wait(int pid, int *code_store) {
+  assert(current);
   struct mm_struct *mm = current->mm;
   if (code_store != NULL) {
     if (!user_mem_check(mm, (uintptr_t)code_store, sizeof(int), 1)) {
