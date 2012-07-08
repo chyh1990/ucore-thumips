@@ -254,6 +254,7 @@
  */
 #define ST0_CO			0x08000000
 
+#if 0
 /*
  * Bitfields in the R[23]000 cp0 status register.
  */
@@ -267,6 +268,7 @@
 #define ST0_ISC			0x00010000
 #define ST0_SWC			0x00020000
 #define ST0_CM			0x00080000
+#endif
 
 /*
  * Bits specific to the R4640/R4650

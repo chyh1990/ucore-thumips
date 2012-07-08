@@ -8,8 +8,6 @@ SECTIONS
   .text      :
   {
     . = ALIGN(4);
-    wrs_user_text_start = .; _wrs_user_text_start = .;
-    *(.startup)
     *(.text) 
     *(.text.*)
     *(.gnu.linkonce.t*)
@@ -17,12 +15,9 @@ SECTIONS
     *(.mips16.call.*) /* for MIPS */
     *(.rodata) *(.rodata.*) *(.gnu.linkonce.r*) *(.rodata1)
   }
-. = ALIGN(16);
-wrs_user_text_end = .; _wrs_user_text_end = .;
-etext = .; _etext = .;
-.data    : AT(etext)
+. = ALIGN(4096);
+.data    : 
 {
-  wrs_user_data_start = .; _wrs_user_data_start = .;
   *(.data)
   *(.data.*)
   *(.gnu.linkonce.d*)
@@ -39,24 +34,20 @@ etext = .; _etext = .;
   *(.sdata) *(.sdata.*) *(.lit8) *(.lit4)
     . = ALIGN(16);
 }
-. = ALIGN(16);
-edata = .; _edata = .;
-wrs_user_data_end = .; _wrs_user_data_end = .;
+
+. = ALIGN(4096);
 .bss       :
 {
-  wrs_user_bss_start = .; _wrs_user_bss_start = .;
   *(.sbss) *(.scommon) *(.dynbss) *(.bss) *(COMMON)
   . = ALIGN(16);
 }
 . = ALIGN(16);
-end = .; _end = .;
-wrs_user_bss_end = .; _wrs_user_bss_end = .;
 
 /DISCARD/ :
 {
   /*
   *(.stub)
-  *(.debug*) */
+  *(.debug*)  */
   *(.note)    /* seen on Pentium ELF */
   *(.comment)    /* seen on PPC & SH ELF */
   *(.reginfo)  

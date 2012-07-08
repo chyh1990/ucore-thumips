@@ -4,6 +4,7 @@
 #include <asm/regdef.h>
 #include <asm/mipsregs.h> 
 
+.extern current # current pcb proc.h
 .extern mips_trap
    /* 
     * Do not allow the assembler to use $1 (at), because we need to be
@@ -12,10 +13,11 @@
    .set noat
    .set noreorder
    .section .text
-# +0x000: R4000 tlbmiss vector
+# +0x000: R4000 tlbmiss vector (user)
 .global ramExcHandle_tlbmiss
 ramExcHandle_tlbmiss:
-  b ramExcHandle_tlbmiss
+  #b ramExcHandle_tlbmiss
+  b ramExcHandle_general 
   nop
 
 .global ramReserved
@@ -30,14 +32,15 @@ ramReserved:
 ramExcHandle_general:
    move k1, sp			/* Save previous stack pointer in k1 */
    mfc0 k0, CP0_STATUS /* Get status register */
-   andi k0, k0, ST0_KUP/* Check the we-were-in-user-mode bit */
+   andi k0, k0, KSU_USER/* Check the we-were-in-user-mode bit */
    beq	k0, $0, 1f		/* If clear, from kernel, already have stack */
    nop				/* delay slot */
    
    /* TODO */
    /* Coming from user mode - load kernel stack into sp */
-   #la k0, curkstack		/* get address of "curkstack" */
-   #lw sp, 0(k0)			/* get its value */
+   la k0, current /* get address of "curkstack" */
+   lw k0, 0(k0)
+   lw sp, 12(k0)			/* get its value */
    nop				/* delay slot for the load */
   
 1:

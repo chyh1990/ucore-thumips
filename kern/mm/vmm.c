@@ -427,7 +427,7 @@ do_pgfault(struct mm_struct *mm, uint32_t error_code, uintptr_t addr) {
     }
   }
   /* refill TLB for mips, no second exception */
-  tlb_refill(addr, ptep);
+  //tlb_refill(addr, ptep);
   ret = 0;
 failed:
   return ret;

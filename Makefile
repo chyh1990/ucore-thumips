@@ -51,7 +51,7 @@ SRCDIR  := kern
 DEPDIR  := dep
 
 
-MODULES   := init libs debug driver trap mm sync process schedule
+MODULES   := init libs debug driver trap mm sync process schedule syscall
 SRC_DIR   := $(addprefix $(SRCDIR)/,$(MODULES))
 BUILD_DIR := $(addprefix $(OBJDIR)/,$(MODULES))
 DEP_DIR   := $(addprefix $(DEPDIR)/,$(MODULES))
@@ -90,7 +90,7 @@ MAKEDEPEND = $(CLANG) -M $(CFLAGS) $(INCLUDES) -o $(DEPDIR)/$*.d $<
 
 .PHONY: all checkdirs clean 
 
-all: checkdirs obj/ucore-kernel
+all: checkdirs  obj/ucore-kernel-piggy
 
 $(shell mkdir -p $(DEP_DIR))
 
@@ -140,17 +140,19 @@ $(USER_LIB): $(BUILD_DIR) $(USER_LIB_OBJ)
 
 #user applications
     #$(CC) $(INCLUDES)  $$< -o $$@
+	#$(OBJCOPY) -O elf32-tradlittlemips -I binary -B mips $$@  $$@.piggy.o
 define make-user-app
 $1: $(BUILD_DIR) $(addsuffix .o,$1) $(USER_LIB)
 	@echo LINK $$@
-	$(LD) -T $(USER_LIB_SRCDIR)/user.ld $(addsuffix .o,$1) $(USER_LIB) -o $$@
-	$(OBJCOPY) -O elf32-tradlittlemips -I binary -B mips $$@  $$@.piggy.o
+	$(LD) -T $(USER_LIB_SRCDIR)/user.ld  $(addsuffix .o,$1) $(USER_LIB) -o $$@
+	$(SED) 's/$$$$FILE/$(notdir $1)/g' tools/piggy.S.in > $(USER_OBJDIR)/piggy.S
+	$(AS) $(USER_OBJDIR)/piggy.S -o $$@.piggy.o
 endef
 
 $(foreach bdir,$(USER_APP_BINS),$(eval $(call make-user-app,$(bdir))))
 
 $(USER_OBJDIR)/%.o: $(USER_SRCDIR)/%.c
-	$(CC) -c -mips1 $(INCLUDES) $(USER_INCLUDE) $(CFLAGS)  $<  -o $@
+	$(CC) -c -mips1  $(USER_INCLUDE) $(INCLUDES) $(CFLAGS)  $<  -o $@
 
 $(USER_OBJDIR)/%.o: $(USER_SRCDIR)/%.S
 	$(CC) -mips32 -c -D__ASSEMBLY__ $(USER_INCLUDE) -g -EL -G0  $<  -o $@

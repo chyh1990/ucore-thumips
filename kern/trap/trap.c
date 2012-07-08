@@ -12,6 +12,9 @@
 #include <assert.h>
 #include <console.h>
 #include <kdebug.h>
+#include <error.h>
+#include <syscall.h>
+#include <proc.h>
 
 #define TICK_NUM 100
 
@@ -48,7 +51,7 @@ trapname(int trapno) {
 
 bool
 trap_in_kernel(struct trapframe *tf) {
-  return !(tf->tf_status & ST0_KUP);
+  return !(tf->tf_status & KSU_USER);
 }
 
 
@@ -120,40 +123,88 @@ static inline int get_error_code(int write, pte_t *pte)
 }
 
 static int
-pgfault_handler(uint32_t addr, uint32_t error_code) {
+pgfault_handler(struct trapframe *tf, uint32_t addr, uint32_t error_code) {
+#if 0
     extern struct mm_struct *check_mm_struct;
     if (check_mm_struct != NULL) {
         return do_pgfault(check_mm_struct, error_code, addr);
     }
     panic("unhandled page fault.\n");
+#endif
+  extern struct mm_struct *check_mm_struct;
+  if(check_mm_struct !=NULL) { //used for test check_swap
+    //print_pgfault(tf);
+  }
+  struct mm_struct *mm;
+  if (check_mm_struct != NULL) {
+    assert(current == idleproc);
+    mm = check_mm_struct;
+  }
+  else {
+    if (current == NULL) {
+      print_trapframe(tf);
+      //print_pgfault(tf);
+      panic("unhandled page fault.\n");
+    }
+    mm = current->mm;
+  }
+  return do_pgfault(mm, error_code, addr);
 }
 
 /* use software emulated X86 pgfault */
-static int handle_tlbmiss(struct trapframe* tf, int write)
+static void handle_tlbmiss(struct trapframe* tf, int write)
 {
+#if 0
+  if(!trap_in_kernel(tf)){
+    print_trapframe(tf);
+    while(1);
+  }
+#endif
+
   static int entercnt = 0;
   entercnt ++;
   cprintf("## enter handle_tlbmiss %d times\n", entercnt);
+  int in_kernel = trap_in_kernel(tf);
   assert(current_pgdir != NULL);
   //print_trapframe(tf);
   uint32_t badaddr = tf->tf_vaddr;
+  int ret = 0;
   pte_t *pte = get_pte(current_pgdir, tf->tf_vaddr, 0);
   if(pte==NULL || ptep_invalid(pte)){   //PTE miss, pgfault
     //panic("unimpl");
     //TODO
-    //tlb will be refill in do_pgfault,
-    //so a vmm pgfault will trigger only 1 exception
-    int ret = pgfault_handler(badaddr, get_error_code(write, pte));
-    if(ret){
-      panic("unhandled pgfault");
-    }
+    //tlb will not be refill in do_pgfault,
+    //so a vmm pgfault will trigger 2 exception
+    //permission check in tlb miss
+    ret = pgfault_handler(tf, badaddr, get_error_code(write, pte));
   }else{ //tlb miss only, reload it
     /* refill two slot */
-    //printhex(*pte);
-    //cprintf("\n");
-    tlb_refill(badaddr, pte); 
+    /* check permission */
+    if(in_kernel){
+      tlb_refill(badaddr, pte); 
+    cprintf("## refill K\n");
+      return;
+    }else{
+      if(!ptep_u_read(pte)){
+        ret = -1;
+        goto exit;
+      }
+      if(write && !ptep_u_write(pte)){
+        ret = -2;
+        goto exit;
+      }
+    cprintf("## refill U %d %08x\n", write, badaddr);
+      tlb_refill(badaddr, pte);
+      return ;
+    }
   }
-  return -1;
+
+exit:
+  if(ret){
+    print_trapframe(tf);
+    panic("unhandled pgfault");
+  }
+  return ;
 }
 
 static void
@@ -174,7 +225,8 @@ trap_dispatch(struct trapframe *tf) {
       while(1);
       break;
     case EX_SYS:
-      print_trapframe(tf);
+      //print_trapframe(tf);
+      syscall();
       tf->tf_epc += 4;
       break;
     default:
@@ -190,9 +242,32 @@ trap_dispatch(struct trapframe *tf) {
  * This is called by the assembly-language exception handler once
  * the trapframe has been set up.
  */
-void
+  void
 mips_trap(struct trapframe *tf)
 {
-  trap_dispatch(tf);
+  // dispatch based on what type of trap occurred
+  // used for previous projects
+  if (current == NULL) {
+    trap_dispatch(tf);
+  }
+  else {
+    // keep a trapframe chain in stack
+    struct trapframe *otf = current->tf;
+    current->tf = tf;
+
+    bool in_kernel = trap_in_kernel(tf);
+
+    trap_dispatch(tf);
+
+    current->tf = otf;
+    if (!in_kernel) {
+      if (current->flags & PF_EXITING) {
+        do_exit(-E_KILLED);
+      }
+      if (current->need_resched) {
+        schedule();
+      }
+    }
+  }
 }
 

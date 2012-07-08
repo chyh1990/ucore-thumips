@@ -13,6 +13,10 @@
 #define USERBASE            0x10000000
 #define USERTOP             MIPS_KSEG0 
 
+#define USTACKTOP           USERTOP
+#define USTACKPAGE          16                         // # of pages in user stack
+#define USTACKSIZE          (USTACKPAGE * PGSIZE)       // sizeof user stack
+
 #define USER_ACCESS(start, end)                     \
 (USERBASE <= (start) && (start) < (end) && (end) <= USERTOP)
 

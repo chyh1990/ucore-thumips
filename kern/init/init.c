@@ -33,9 +33,11 @@ kern_init(void) {
 
     print_kerninfo();
 
+#if 0
     cprintf("EX\n");
     __asm__ volatile("syscall");
     cprintf("EX RET\n");
+#endif
 
     pmm_init();                 // init physical memory management
 

@@ -1,15 +1,10 @@
 .text
 .globl _start
+.extern _gp
 _start:
-#if 0
-    # set ebp for backtrace
-    movl $0x0, %ebp
+    nop
+    la $gp, _gp
+    addiu $sp, $sp, -16
+    jal umain
+    nop
 
-    # move down the esp register
-    # since it may cause page fault in backtrace
-    subl $0x20, %esp
-
-    # call user-program function
-    call umain
-1:  jmp 1b
-#endif

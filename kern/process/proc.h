@@ -13,6 +13,7 @@ enum proc_state {
     PROC_SLEEPING,    // sleeping
     PROC_RUNNABLE,    // runnable(maybe running)
     PROC_ZOMBIE,      // almost dead, and wait parent proc to reclaim his resource
+    PROC_FORCE_32 = 0xFFFFFFFF
 };
 
 // Saved registers for kernel context switches.

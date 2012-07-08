@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <unistd.h>
 
 /* ------------- process/thread mechanism design&implementation -------------
 (an simplified Linux process/thread mechanism )
@@ -477,8 +478,7 @@ load_icode(unsigned char *binary, size_t size) {
     if (current->mm != NULL) {
         panic("load_icode: current->mm must be empty.\n");
     }
-    panic("unimpl");
-#if 0
+    //panic("unimpl");
     int ret = -E_NO_MEM;
     struct mm_struct *mm;
     if ((mm = mm_create()) == NULL) {
@@ -489,9 +489,14 @@ load_icode(unsigned char *binary, size_t size) {
     }
 
     struct Page *page;
+    assert(((uint32_t)binary & 0x3) == 0);
 
-    struct elfhdr *elf = (struct elfhdr *)binary;
+    struct elfhdr32 _elf;
+    _load_elfhdr(binary, &_elf);
+
+    struct elfhdr32 *elf = &_elf;
     struct proghdr *ph = (struct proghdr *)(binary + elf->e_phoff);
+    assert(((uint32_t)ph & 0x3) == 0);
     if (elf->e_magic != ELF_MAGIC) {
         ret = -E_INVAL_ELF;
         goto bad_elf_cleanup_pgdir;
@@ -520,7 +525,7 @@ load_icode(unsigned char *binary, size_t size) {
         }
         unsigned char *from = binary + ph->p_offset;
         size_t off, size;
-        uintptr_t start = ph->p_va, end, la = ROUNDDOWN(start, PGSIZE);
+        uintptr_t start = ph->p_va, end, la = ROUNDDOWN_2N(start, PGSHIFT);
 
         ret = -E_NO_MEM;
 
@@ -566,13 +571,13 @@ load_icode(unsigned char *binary, size_t size) {
 
     vm_flags = VM_READ | VM_WRITE | VM_STACK;
     if ((ret = mm_map(mm, USTACKTOP - USTACKSIZE, USTACKSIZE, vm_flags, NULL)) != 0) {
-        goto bad_cleanup_mmap;
+      goto bad_cleanup_mmap;
     }
-	assert(pgdir_alloc_page(mm->pgdir, USTACKTOP-PGSIZE , PTE_USER) != NULL);
+    assert(pgdir_alloc_page(mm->pgdir, USTACKTOP-PGSIZE , PTE_USER) != NULL);
     assert(pgdir_alloc_page(mm->pgdir, USTACKTOP-2*PGSIZE , PTE_USER) != NULL);
-	assert(pgdir_alloc_page(mm->pgdir, USTACKTOP-3*PGSIZE , PTE_USER) != NULL);
-	assert(pgdir_alloc_page(mm->pgdir, USTACKTOP-4*PGSIZE , PTE_USER) != NULL);
-	
+    assert(pgdir_alloc_page(mm->pgdir, USTACKTOP-3*PGSIZE , PTE_USER) != NULL);
+    assert(pgdir_alloc_page(mm->pgdir, USTACKTOP-4*PGSIZE , PTE_USER) != NULL);
+
     mm_count_inc(mm);
     current->mm = mm;
     current->cr3 = PADDR(mm->pgdir);
@@ -582,12 +587,22 @@ load_icode(unsigned char *binary, size_t size) {
     memset(tf, 0, sizeof(struct trapframe));
     //LAB5:EXERCISE1 2009010989
     // should set cs,ds,es,ss,esp,eip,eflags
+#if 0
     tf->tf_cs = USER_CS;
     tf->tf_ds = tf->tf_es = USER_DS;
     tf->tf_ss = USER_DS;
     tf->tf_esp = USTACKTOP;
     tf->tf_eip = elf->e_entry;
     tf->tf_eflags = FL_IF;
+#endif
+    tf->tf_epc = elf->e_entry;
+    tf->tf_regs.reg_r[MIPS_REG_SP] = USTACKTOP;
+    cprintf("### %08x\n", tf->tf_epc);
+    uint32_t status = read_c0_status();
+    status &= ~ST0_KSU;
+    status |= KSU_USER;
+    status |= ST0_EXL;
+    tf->tf_status = status;
 
     ret = 0;
 out:
@@ -600,51 +615,50 @@ bad_pgdir_cleanup_mm:
     mm_destroy(mm);
 bad_mm:
     goto out;
-#endif
 }
 
 // do_execve - call exit_mmap(mm)&pug_pgdir(mm) to reclaim memory space of current process
 //           - call load_icode to setup new memory space accroding binary prog.
 int
 do_execve(const char *name, size_t len, unsigned char *binary, size_t size) {
-    struct mm_struct *mm = current->mm;
-    if (!user_mem_check(mm, (uintptr_t)name, len, 0)) {
-        return -E_INVAL;
-    }
-    if (len > PROC_NAME_LEN) {
-        len = PROC_NAME_LEN;
-    }
+  struct mm_struct *mm = current->mm;
+  if (!user_mem_check(mm, (uintptr_t)name, len, 0)) {
+    return -E_INVAL;
+  }
+  if (len > PROC_NAME_LEN) {
+    len = PROC_NAME_LEN;
+  }
 
-    char local_name[PROC_NAME_LEN + 1];
-    memset(local_name, 0, sizeof(local_name));
-    memcpy(local_name, name, len);
+  char local_name[PROC_NAME_LEN + 1];
+  memset(local_name, 0, sizeof(local_name));
+  memcpy(local_name, name, len);
 
-    if (mm != NULL) {
-        lcr3(boot_cr3);
-        if (mm_count_dec(mm) == 0) {
-            exit_mmap(mm);
-            put_pgdir(mm);
-            mm_destroy(mm);
-        }
-        current->mm = NULL;
+  if (mm != NULL) {
+    lcr3(boot_cr3);
+    if (mm_count_dec(mm) == 0) {
+      exit_mmap(mm);
+      put_pgdir(mm);
+      mm_destroy(mm);
     }
-    int ret;
-    if ((ret = load_icode(binary, size)) != 0) {
-        goto execve_exit;
-    }
-    set_proc_name(current, local_name);
-    return 0;
+    current->mm = NULL;
+  }
+  int ret;
+  if ((ret = load_icode(binary, size)) != 0) {
+    goto execve_exit;
+  }
+  set_proc_name(current, local_name);
+  return 0;
 
 execve_exit:
-    do_exit(ret);
-    panic("already exit: %e.\n", ret);
+  do_exit(ret);
+  panic("already exit: %e.\n", ret);
 }
 
 // do_yield - ask the scheduler to reschedule
 int
 do_yield(void) {
-    current->need_resched = 1;
-    return 0;
+  current->need_resched = 1;
+  return 0;
 }
 
 // do_wait - wait one OR any children with PROC_ZOMBIE state, and free memory space of kernel stack
@@ -652,19 +666,19 @@ do_yield(void) {
 // NOTE: only after do_wait function, all resources of the child proces are free.
 int
 do_wait(int pid, int *code_store) {
-    struct mm_struct *mm = current->mm;
-    if (code_store != NULL) {
-        if (!user_mem_check(mm, (uintptr_t)code_store, sizeof(int), 1)) {
-            return -E_INVAL;
-        }
+  struct mm_struct *mm = current->mm;
+  if (code_store != NULL) {
+    if (!user_mem_check(mm, (uintptr_t)code_store, sizeof(int), 1)) {
+      return -E_INVAL;
     }
+  }
 
-    struct proc_struct *proc;
-    bool intr_flag, haskid;
+  struct proc_struct *proc;
+  bool intr_flag, haskid;
 repeat:
-    haskid = 0;
-    if (pid != 0) {
-        proc = find_proc(pid);
+  haskid = 0;
+  if (pid != 0) {
+    proc = find_proc(pid);
         if (proc != NULL && proc->parent == current) {
             haskid = 1;
             if (proc->state == PROC_ZOMBIE) {
@@ -730,8 +744,21 @@ do_kill(int pid) {
 // kernel_execve - do SYS_exec syscall to exec a user program called by user_main kernel_thread
 static int
 kernel_execve(const char *name, unsigned char *binary, size_t size) {
-    int ret, len = strlen(name);
-    panic("unimpl");
+    int ret = -1, len = strlen(name);
+    //panic("unimpl");
+    asm volatile(
+      "la $v0, %1;\n" /* syscall no. */
+      "move $a0, %2;\n"
+      "move $a1, %3;\n"
+      "move $a2, %4;\n"
+      "move $a3, %5;\n"
+      "syscall;\n"
+      "nop;\n"
+      "move %0, $v0;\n"
+      : "=r"(ret)
+      : "i"(SYSCALL_BASE+SYS_exec), "r"(name), "r"(len), "r"(binary), "r"(size) 
+      : "a0", "a1", "a2", "a3", "v0"
+    );
     return ret;
 }
 
@@ -743,9 +770,9 @@ kernel_execve(const char *name, unsigned char *binary, size_t size) {
 
 #define KERNEL_EXECVE(x) ({                                             \
             extern unsigned char _binary_obj_user_##x##_start[],  \
-                _binary_obj_user_##x##_size[];                    \
+                _binary_obj_user_##x##_end[];                    \
             __KERNEL_EXECVE(#x, _binary_obj_user_##x##_start,     \
-                            _binary_obj_user_##x##_size);         \
+                           _binary_obj_user_##x##_end - _binary_obj_user_##x##_start);         \
         })
 
 #define __KERNEL_EXECVE2(x, xstart, xsize) ({                           \

@@ -3,32 +3,33 @@
 #include <stdarg.h>
 #include <syscall.h>
 
-#define MAX_ARGS            5
+#define MAX_ARGS            4
+#define SYSCALL_BASE        0x80
 
 static inline int
 syscall(int num, ...) {
     va_list ap;
     va_start(ap, num);
-    uint32_t a[MAX_ARGS];
+    uint32_t arg[MAX_ARGS];
     int i, ret;
     for (i = 0; i < MAX_ARGS; i ++) {
-        a[i] = va_arg(ap, uint32_t);
+        arg[i] = va_arg(ap, uint32_t);
     }
     va_end(ap);
 
-#if 0
-    asm volatile (
-        "int %1;"
-        : "=a" (ret)
-        : "i" (T_SYSCALL),
-          "a" (num),
-          "d" (a[0]),
-          "c" (a[1]),
-          "b" (a[2]),
-          "D" (a[3]),
-          "S" (a[4])
-        : "cc", "memory");
-#endif
+    asm volatile(
+      "move $v0, %1;\n" /* syscall no. */
+      "move $a0, %2;\n"
+      "move $a1, %3;\n"
+      "move $a2, %4;\n"
+      "move $a3, %5;\n"
+      "syscall;\n"
+      "nop;\n"
+      "move %0, $v0;\n"
+      : "=r"(ret)
+      : "r"(SYSCALL_BASE+num), "r"(arg[0]), "r"(arg[1]), "r"(arg[2]), "r"(arg[3]) 
+      : "a0", "a1", "a2", "a3", "v0"
+    );
     return ret;
 }
 

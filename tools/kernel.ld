@@ -22,7 +22,7 @@ SECTIONS
 . = ALIGN(16);
 wrs_kernel_text_end = .; _wrs_kernel_text_end = .;
 etext = .; _etext = .;
-.data    : AT(etext)
+.data ALIGN(4)   : AT(etext)
 {
   wrs_kernel_data_start = .; _wrs_kernel_data_start = .;
   *(.data)
@@ -44,7 +44,7 @@ etext = .; _etext = .;
 . = ALIGN(16);
 edata = .; _edata = .;
 wrs_kernel_data_end = .; _wrs_kernel_data_end = .;
-.bss       :
+.bss  ALIGN(4)  :
 {
   wrs_kernel_bss_start = .; _wrs_kernel_bss_start = .;
   *(.sbss) *(.scommon) *(.dynbss) *(.bss) *(COMMON)

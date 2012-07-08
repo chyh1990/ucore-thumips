@@ -1,7 +1,7 @@
 #ifndef __LIBS_UNISTD_H__
 #define __LIBS_UNISTD_H__
 
-#define T_SYSCALL           0x80
+#define SYSCALL_BASE            0x80
 
 /* syscall number */
 #define SYS_exit            1
