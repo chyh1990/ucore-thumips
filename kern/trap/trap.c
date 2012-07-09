@@ -226,7 +226,7 @@ trap_dispatch(struct trapframe *tf) {
       break;
     case EX_RI:
       print_trapframe(tf);
-      while(1);
+      panic("hey man! Do NOT use that insn!");
       break;
     case EX_SYS:
       //print_trapframe(tf);

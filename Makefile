@@ -51,7 +51,7 @@ SRCDIR  := kern
 DEPDIR  := dep
 
 
-MODULES   := init libs debug driver trap mm sync process schedule syscall
+MODULES   := init libs debug driver trap mm sync process schedule syscall fs
 SRC_DIR   := $(addprefix $(SRCDIR)/,$(MODULES))
 BUILD_DIR := $(addprefix $(OBJDIR)/,$(MODULES))
 DEP_DIR   := $(addprefix $(DEPDIR)/,$(MODULES))
