@@ -5,6 +5,9 @@
 #define NULL ((void *)0)
 #endif
 
+
+#define CHAR_BIT        8
+
 #define __always_inline inline __attribute__((always_inline))
 #define __noinline __attribute__((noinline))
 #define __noreturn __attribute__((noreturn))
@@ -33,6 +36,9 @@ typedef uint32_t uintptr_t;
 /* size_t is used for memory object sizes */
 typedef uintptr_t size_t;
 
+/* off_t is used for file offsets and lengths */
+typedef intptr_t off_t;
+
 /* used for page numbers */
 typedef size_t ppn_t;
 
@@ -46,13 +52,21 @@ typedef size_t ppn_t;
             (typeof(a))(__a - __a % (n));                           \
         })
 */
-#define ROUNDDOWN_2N(a,n) (( ((size_t)a) >> (n) ) << n)
+#define ROUNDDOWN_2N(a,n) (( ((size_t)a) >> (n) ) << (n))
 
 /* Round up to the nearest multiple of n */
 #define ROUNDUP_2N(a, n) ({                                            \
             size_t __n = (size_t)(n);                               \
             (typeof(a))(ROUNDDOWN_2N((size_t)(a) + (1<<__n) - 1, __n));     \
         })
+
+
+/* Round up the result of dividing of n */
+#define ROUNDUP_DIV_2N(a, n) ({                                        \
+uint32_t __n = (1<<(uint32_t)(n));                           \
+(typeof(a))(((a) + __n - 1) >> (n));                     \
+})
+
 
 /* Return the offset of 'member' relative to the beginning of a struct type */
 #define offsetof(type, member)                                      \

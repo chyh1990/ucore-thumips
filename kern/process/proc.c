@@ -106,6 +106,7 @@ alloc_proc(void) {
       list_init(&(proc->run_link));
       list_init(&(proc->list_link));
       proc->time_slice = 0;
+      proc->fs_struct = NULL;
       proc->cptr = proc->yptr = proc->optr = NULL;
     }
     return proc;

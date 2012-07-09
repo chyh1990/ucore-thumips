@@ -65,6 +65,7 @@ struct proc_struct {
     struct run_queue *rq;                       // running queue contains Process
     list_entry_t run_link;                      // the entry linked in run queue
     int time_slice;                             // time slice for occupying the CPU
+    struct fs_struct *fs_struct;                // the file related info(pwd, files_count, files_array, fs_semaphore) of process
 };
 
 
@@ -75,6 +76,7 @@ struct proc_struct {
 #define WT_CHILD                    (0x00000001 | WT_INTERRUPTED)  // wait child process
 #define WT_KSEM                      0x00000100                    // wait kernel semaphore
 #define WT_TIMER                    (0x00000002 | WT_INTERRUPTED)  // wait timer
+#define WT_KBD                      (0x00000004 | WT_INTERRUPTED)  // wait the input of keyboard
 
 #define le2proc(le, member)         \
   to_struct((le), struct proc_struct, member)
