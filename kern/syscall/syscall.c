@@ -71,6 +71,12 @@ sys_gettime(uint32_t arg[]) {
     return (int)ticks;
 }
 
+static int
+sys_sleep(uint32_t arg[]) {
+    unsigned int time = (unsigned int)arg[0];
+    return do_sleep(time);
+}
+
 static int (*syscalls[])(uint32_t arg[]) = {
   [SYS_exit]              sys_exit,
   [SYS_fork]              sys_fork,
@@ -81,7 +87,8 @@ static int (*syscalls[])(uint32_t arg[]) = {
   [SYS_getpid]            sys_getpid,
   [SYS_putc]              sys_putc,
   [SYS_pgdir]             sys_pgdir,
-	[SYS_gettime]           sys_gettime,
+  [SYS_gettime]           sys_gettime,
+  [SYS_sleep]             sys_sleep,
 };
 
 #define NUM_SYSCALLS        ((sizeof(syscalls)) / (sizeof(syscalls[0])))

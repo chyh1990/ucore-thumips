@@ -6,6 +6,8 @@
 #include <memlayout.h>
 #include <atomic.h>
 #include <sync.h>
+#include <proc.h>
+#include <sem.h>
 
 //pre define
 struct mm_struct;
@@ -36,7 +38,9 @@ struct mm_struct {
     int map_count;                 // the count of these vma
 	void *sm_priv;				   // the private data for swap manager
 	atomic_t mm_count;
-	lock_t mm_lock;
+	semaphore_t mm_sem;
+	int locked_by;
+
 };
 
 struct vma_struct *find_vma(struct mm_struct *mm, uintptr_t addr);
@@ -86,14 +90,18 @@ mm_count_dec(struct mm_struct *mm) {
 static inline void
 lock_mm(struct mm_struct *mm) {
     if (mm != NULL) {
-        lock(&(mm->mm_lock));
+        down(&(mm->mm_sem));
+        if (current != NULL) {
+            mm->locked_by = current->pid;
+        }
     }
 }
 
 static inline void
 unlock_mm(struct mm_struct *mm) {
     if (mm != NULL) {
-        unlock(&(mm->mm_lock));
+        up(&(mm->mm_sem));
+        mm->locked_by = 0;
     }
 }
 

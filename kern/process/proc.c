@@ -793,7 +793,7 @@ kernel_execve(const char *name, unsigned char *binary, size_t size) {
 // user_main - kernel thread used to exec a user program
 static int
 user_main(void *arg) {
-    KERNEL_EXECVE(faultreadkernel);
+    KERNEL_EXECVE(hello);
     panic("user_main execve failed.\n");
 }
 
@@ -869,3 +869,23 @@ cpu_idle(void) {
     }
 }
 
+// do_sleep - set current process state to sleep and add timer with "time"
+//          - then call scheduler. if process run again, delete timer first.
+int
+do_sleep(unsigned int time) {
+    if (time == 0) {
+        return 0;
+    }
+    bool intr_flag;
+    local_intr_save(intr_flag);
+    timer_t __timer, *timer = timer_init(&__timer, current, time);
+    current->state = PROC_SLEEPING;
+    current->wait_state = WT_TIMER;
+    add_timer(timer);
+    local_intr_restore(intr_flag);
+
+    schedule();
+
+    del_timer(timer);
+    return 0;
+}
