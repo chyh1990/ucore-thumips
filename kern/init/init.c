@@ -11,6 +11,7 @@
 #include <vmm.h>
 #include <proc.h>
 #include <thumips_tlb.h>
+#include <sched.h>
 
 void setup_exception_vector()
 {
@@ -43,6 +44,7 @@ kern_init(void) {
     pmm_init();                 // init physical memory management
 
     vmm_init();                 // init virtual memory management
+    sched_init();
     proc_init();                // init process table
     intr_enable();              // enable irq interrupt
     //*(int*)(0x00124) = 0x432;

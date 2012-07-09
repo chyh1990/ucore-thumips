@@ -6,6 +6,8 @@
 #include <pmm.h>
 #include <assert.h>
 
+extern volatile int ticks;
+
 static int
 sys_exit(uint32_t arg[]) {
     int error_code = (int)arg[0];
@@ -64,6 +66,11 @@ sys_pgdir(uint32_t arg[]) {
     return 0;
 }
 
+static uint32_t
+sys_gettime(uint32_t arg[]) {
+    return (int)ticks;
+}
+
 static int (*syscalls[])(uint32_t arg[]) = {
   [SYS_exit]              sys_exit,
   [SYS_fork]              sys_fork,
@@ -74,6 +81,7 @@ static int (*syscalls[])(uint32_t arg[]) = {
   [SYS_getpid]            sys_getpid,
   [SYS_putc]              sys_putc,
   [SYS_pgdir]             sys_pgdir,
+	[SYS_gettime]           sys_gettime,
 };
 
 #define NUM_SYSCALLS        ((sizeof(syscalls)) / (sizeof(syscalls[0])))
@@ -85,6 +93,7 @@ syscall(void) {
     uint32_t arg[4];
     int num = tf->tf_regs.reg_r[MIPS_REG_V0];
     num -= SYSCALL_BASE;
+    //kprintf("$ %d %d\n",current->pid, num);
     if (num >= 0 && num < NUM_SYSCALLS) {
         if (syscalls[num] != NULL) {
             arg[0] = tf->tf_regs.reg_r[MIPS_REG_A0];

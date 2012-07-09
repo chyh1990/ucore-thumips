@@ -163,7 +163,7 @@ static void handle_tlbmiss(struct trapframe* tf, int write)
 
   static int entercnt = 0;
   entercnt ++;
-  kprintf("## enter handle_tlbmiss %d times\n", entercnt);
+  //kprintf("## enter handle_tlbmiss %d times\n", entercnt);
   int in_kernel = trap_in_kernel(tf);
   assert(current_pgdir != NULL);
   //print_trapframe(tf);
@@ -182,7 +182,7 @@ static void handle_tlbmiss(struct trapframe* tf, int write)
     /* check permission */
     if(in_kernel){
       tlb_refill(badaddr, pte); 
-    kprintf("## refill K\n");
+    //kprintf("## refill K\n");
       return;
     }else{
       if(!ptep_u_read(pte)){
@@ -193,7 +193,7 @@ static void handle_tlbmiss(struct trapframe* tf, int write)
         ret = -2;
         goto exit;
       }
-    kprintf("## refill U %d %08x\n", write, badaddr);
+    //kprintf("## refill U %d %08x\n", write, badaddr);
       tlb_refill(badaddr, pte);
       return ;
     }
@@ -230,8 +230,8 @@ trap_dispatch(struct trapframe *tf) {
       break;
     case EX_SYS:
       //print_trapframe(tf);
-      syscall();
       tf->tf_epc += 4;
+      syscall();
       break;
     default:
       print_trapframe(tf);

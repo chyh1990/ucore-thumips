@@ -103,7 +103,9 @@ alloc_proc(void) {
       memset(proc->name, 0, PROC_NAME_LEN);
       proc->exit_code = 0;
       proc->wait_state = 0;
+      list_init(&(proc->run_link));
       list_init(&(proc->list_link));
+      proc->time_slice = 0;
       proc->cptr = proc->yptr = proc->optr = NULL;
     }
     return proc;
@@ -353,7 +355,7 @@ static void
 copy_thread(struct proc_struct *proc, uintptr_t esp, struct trapframe *tf) {
     proc->tf = (struct trapframe *)(proc->kstack + KSTACKSIZE) - 1;
     *(proc->tf) = *tf;
-    //proc->tf->tf_regs.reg_eax = 0;
+    proc->tf->tf_regs.reg_r[MIPS_REG_V0] = 0;
     if(esp == 0)
       esp = proc->kstack - PGSIZE;
     proc->tf->tf_regs.reg_r[MIPS_REG_SP] = esp;
@@ -791,7 +793,7 @@ kernel_execve(const char *name, unsigned char *binary, size_t size) {
 // user_main - kernel thread used to exec a user program
 static int
 user_main(void *arg) {
-    KERNEL_EXECVE(hello);
+    KERNEL_EXECVE(exit);
     panic("user_main execve failed.\n");
 }
 

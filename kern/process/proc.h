@@ -62,6 +62,9 @@ struct proc_struct {
     int exit_code;                              // exit code (be sent to parent proc)
     uint32_t wait_state;                        // waiting state
     struct proc_struct *cptr, *yptr, *optr;     // relations between processes
+    struct run_queue *rq;                       // running queue contains Process
+    list_entry_t run_link;                      // the entry linked in run queue
+    int time_slice;                             // time slice for occupying the CPU
 };
 
 
@@ -87,6 +90,10 @@ void cpu_idle(void) __attribute__((noreturn));
 struct proc_struct *find_proc(int pid);
 int do_fork(uint32_t clone_flags, uintptr_t stack, struct trapframe *tf);
 int do_exit(int error_code);
+int do_yield(void);
+int do_execve(const char *name, size_t len, unsigned char *binary, size_t size);
+int do_wait(int pid, int *code_store);
+int do_kill(int pid);
 
 #endif /* !__KERN_PROCESS_PROC_H__ */
 

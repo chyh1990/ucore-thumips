@@ -169,8 +169,8 @@ common_exception:
     */
    sw $0, 12(sp)
 
-  # support nested interrput
-  la   t0, ~ST0_KSU
+  # support nested interrupt
+  la   t0, ~(ST0_KSU|ST0_EXL|ST0_IE)
   and t1, t1, t0
   mtc0 t1, CP0_STATUS /* Copr.0 reg 11 == status */
 

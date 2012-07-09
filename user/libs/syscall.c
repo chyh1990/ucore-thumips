@@ -17,7 +17,10 @@ syscall(int num, ...) {
     }
     va_end(ap);
 
+    num += SYSCALL_BASE;
+
     asm volatile(
+      ".set noreorder;\n"
       "move $v0, %1;\n" /* syscall no. */
       "move $a0, %2;\n"
       "move $a1, %3;\n"
@@ -27,7 +30,7 @@ syscall(int num, ...) {
       "nop;\n"
       "move %0, $v0;\n"
       : "=r"(ret)
-      : "r"(SYSCALL_BASE+num), "r"(arg[0]), "r"(arg[1]), "r"(arg[2]), "r"(arg[3]) 
+      : "r"(num), "r"(arg[0]), "r"(arg[1]), "r"(arg[2]), "r"(arg[3]) 
       : "a0", "a1", "a2", "a3", "v0"
     );
     return ret;
