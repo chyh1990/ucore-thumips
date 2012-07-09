@@ -26,15 +26,15 @@
 
 #define MIN(x,y) (((x)<(y))?(x):(y))
 
-char initrd_begin[], initrd_end[];
+//char initrd_begin[], initrd_end[];
 
 bool check_initrd(){
-  if(initrd_begin == initrd_end){
+  if(_initrd_begin == _initrd_end){
     kprintf("Warning: No Initrd!\n");
     return 0;
   }
   kprintf("Initrd: 0x%08x - 0x%08x, size: 0x%08x, magic: 0x%08x\n", 
-      initrd_begin, initrd_end-1, initrd_end-initrd_begin, *(uint32_t*)initrd_begin);
+      _initrd_begin, _initrd_end-1, _initrd_end - _initrd_begin, *(uint32_t*)_initrd_begin);
   return 1;
 }
 
@@ -72,7 +72,7 @@ void ramdisk_init_struct(struct ide_device* dev)
     dev->valid = 1;
     dev->sets = ~0;
     dev->size = INITRD_SIZE()/SECTSIZE;
-    dev->iobase = (uintptr_t)initrd_begin;
+    dev->iobase = (uintptr_t)_initrd_begin;
     strcpy(dev->model, "KERN_INITRD");
     dev->init = ramdisk_init;
     dev->read_secs = ramdisk_read;

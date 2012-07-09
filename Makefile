@@ -90,7 +90,7 @@ MAKEDEPEND = $(CLANG) -M $(CFLAGS) $(INCLUDES) -o $(DEPDIR)/$*.d $<
 
 .PHONY: all checkdirs clean 
 
-all: checkdirs  obj/ucore-kernel-piggy
+all: checkdirs  obj/ucore-kernel-initrd
 
 $(shell mkdir -p $(DEP_DIR))
 
@@ -139,8 +139,6 @@ $(USER_LIB): $(BUILD_DIR) $(USER_LIB_OBJ)
 	$(AR) rcs $@ $(USER_LIB_OBJ)
 
 #user applications
-    #$(CC) $(INCLUDES)  $$< -o $$@
-	#$(OBJCOPY) -O elf32-tradlittlemips -I binary -B mips $$@  $$@.piggy.o
 define make-user-app
 $1: $(BUILD_DIR) $(addsuffix .o,$1) $(USER_LIB)
 	@echo LINK $$@
@@ -157,4 +155,24 @@ $(USER_OBJDIR)/%.o: $(USER_SRCDIR)/%.c
 $(USER_OBJDIR)/%.o: $(USER_SRCDIR)/%.S
 	$(CC) -mips32 -c -D__ASSEMBLY__ $(USER_INCLUDE) -g -EL -G0  $<  -o $@
 
+
+# filesystem
+TOOL_MKSFS := tools/mksfs
+ROOTFS_DIR:= $(USER_OBJDIR)/rootfs
+ROOTFS_IMG:= $(USER_OBJDIR)/initrd.img
+$(TOOL_MKSFS): tools/mksfs.c
+	$(HOSTCC) $(HOSTCFLAGS) -o $@ $^
+
+$(OBJDIR)/ucore-kernel-initrd:  $(BUILD_DIR) $(TOOL_MKSFS) $(OBJ) $(USER_APP_BINS) tools/kernel.ld
+	rm -rf $(ROOTFS_DIR) $(ROOTFS_IMG)
+	mkdir $(ROOTFS_DIR)
+	cp $(USER_APP_BINS) $(ROOTFS_DIR)
+	dd if=/dev/zero of=$(ROOTFS_IMG) count=4000
+	$(TOOL_MKSFS) $(ROOTFS_IMG) $(ROOTFS_DIR)
+	$(SED) 's%_FILE_%$(ROOTFS_IMG)%g' tools/initrd_piggy.S.in > $(USER_OBJDIR)/initrd_piggy.S
+	$(AS) $(USER_OBJDIR)/initrd_piggy.S -o $(USER_OBJDIR)/initrd.img.o
+	@echo LINK $@
+	$(LD) -nostdlib -n -G 0 -static -T tools/kernel.ld $(OBJ) \
+					$(addsuffix .piggy.o, $(USER_APP_BINS)) $(USER_OBJDIR)/initrd.img.o -o $@
+	rm -rf $(ROOTFS_DIR)
 

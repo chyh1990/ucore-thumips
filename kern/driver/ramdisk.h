@@ -20,12 +20,12 @@
 #include <ide.h>
 
 /* defined in ldscript */
-extern char initrd_begin[], initrd_end[];
+extern char _initrd_begin[], _initrd_end[];
 
 bool check_initrd();
 
-#define CHECK_INITRD_EXIST() (initrd_end != initrd_begin)
-#define INITRD_SIZE() (initrd_end-initrd_begin)
+#define CHECK_INITRD_EXIST() (_initrd_end != _initrd_begin)
+#define INITRD_SIZE() (_initrd_end - _initrd_begin)
 
 void ramdisk_init_struct(struct ide_device* dev);
 

@@ -793,7 +793,7 @@ kernel_execve(const char *name, unsigned char *binary, size_t size) {
 // user_main - kernel thread used to exec a user program
 static int
 user_main(void *arg) {
-    KERNEL_EXECVE(sleep);
+    KERNEL_EXECVE(forktest);
     panic("user_main execve failed.\n");
 }
 
