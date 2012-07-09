@@ -9,6 +9,7 @@ int sys_kill(int pid);
 int sys_getpid(void);
 int sys_putc(int c);
 int sys_pgdir(void);
+int sys_sleep(unsigned int time);
 
 #endif /* !__USER_LIBS_SYSCALL_H__ */
 

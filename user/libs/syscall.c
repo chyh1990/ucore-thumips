@@ -76,3 +76,12 @@ sys_pgdir(void) {
     return syscall(SYS_pgdir);
 }
 
+size_t
+sys_gettime(void) {
+    return syscall(SYS_gettime);
+}
+
+int
+sys_sleep(unsigned int time) {
+    return syscall(SYS_sleep, time);
+}

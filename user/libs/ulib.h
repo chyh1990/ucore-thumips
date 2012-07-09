@@ -31,6 +31,8 @@ void yield(void);
 int kill(int pid);
 int getpid(void);
 void print_pgdir(void);
+int sleep(unsigned int time);
+unsigned int gettime_msec(void);
 
 #endif /* !__USER_LIBS_ULIB_H__ */
 

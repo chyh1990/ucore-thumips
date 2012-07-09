@@ -46,3 +46,13 @@ print_pgdir(void) {
     sys_pgdir();
 }
 
+unsigned int
+gettime_msec(void) {
+    return (unsigned int)sys_gettime();
+}
+
+int
+sleep(unsigned int time) {
+    return sys_sleep(time);
+}
+
