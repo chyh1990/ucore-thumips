@@ -356,11 +356,11 @@ copy_thread(struct proc_struct *proc, uintptr_t esp, struct trapframe *tf) {
     proc->tf = (struct trapframe *)(proc->kstack + KSTACKSIZE) - 1;
     *(proc->tf) = *tf;
     proc->tf->tf_regs.reg_r[MIPS_REG_V0] = 0;
-    if(esp == 0)
-      esp = proc->kstack - PGSIZE;
+    if(esp == 0) //a kernel thread
+      esp = (uintptr_t)proc->tf - 32;
     proc->tf->tf_regs.reg_r[MIPS_REG_SP] = esp;
     proc->context.sf_ra = (uintptr_t)forkret;
-    proc->context.sf_sp = (uintptr_t)(proc->tf);
+    proc->context.sf_sp = (uintptr_t)(proc->tf) - 32;
 }
 
 // do_fork - parent process for a new child process
@@ -793,7 +793,7 @@ kernel_execve(const char *name, unsigned char *binary, size_t size) {
 // user_main - kernel thread used to exec a user program
 static int
 user_main(void *arg) {
-    KERNEL_EXECVE(exit);
+    KERNEL_EXECVE(faultreadkernel);
     panic("user_main execve failed.\n");
 }
 

@@ -233,6 +233,18 @@ trap_dispatch(struct trapframe *tf) {
       tf->tf_epc += 4;
       syscall();
       break;
+      /* alignment error or access kernel
+       * address space in user mode */
+    case EX_ADEL:
+    case EX_ADES:
+      if(trap_in_kernel(tf)){
+        print_trapframe(tf);
+        panic("Alignment Error");
+      }else{
+        print_trapframe(tf);
+        do_exit(-E_KILLED);
+      }
+      break;
     default:
       print_trapframe(tf);
       while(1);

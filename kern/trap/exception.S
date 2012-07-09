@@ -40,7 +40,7 @@ ramExcHandle_general:
    /* Coming from user mode - load kernel stack into sp */
    la k0, current /* get address of "curkstack" */
    lw k0, 0(k0)
-   lw sp, 12(k0)			/* get its value */
+   lw sp, 72(k0)			/* get its value */
    nop				/* delay slot for the load */
   
 1:
