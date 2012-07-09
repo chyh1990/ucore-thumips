@@ -50,6 +50,8 @@ static inline void tlb_replace_random(unsigned int pagemask, unsigned int hi, un
 static inline uint32_t pte2tlblow(pte_t pte)
 {
   uint32_t t = (((uint32_t)pte - KERNBASE ) >> 12)<<6;
+  if(!ptep_present(&pte))
+    return 0;
   t |= THUMIPS_TLB_ENTRYL_V;
   /* always ignore ASID */
   t |= THUMIPS_TLB_ENTRYL_G;

@@ -44,14 +44,27 @@ struct sfs_super {
 /* inode (on disk) */
 struct sfs_disk_inode {
     uint32_t size;                                  /* size of the file (in bytes) */
-    uint16_t type;                                  /* one of SYS_TYPE_* above */
-    uint16_t nlinks;                                /* # of hard links to this file */
+    unsigned short __type__;                                  /* one of SYS_TYPE_* above */
+    unsigned short __nlinks__;                                /* # of hard links to this file */
     uint32_t blocks;                                /* # of blocks */
     uint32_t direct[SFS_NDIRECT];                   /* direct blocks */
     uint32_t indirect;                              /* indirect blocks */
 //    uint32_t db_indirect;                           /* double indirect blocks */
 //   unused
 };
+
+#define _SFS_INODE_GET_TYPE(din) ({\
+  uint32_t t = *(uint32_t*)&((din)->__type__);\
+  t &= 0xFFFF; \
+  t; \
+  })
+
+#define _SFS_INODE_GET_NLINKS(din)  ({\
+  uint32_t t = *(uint32_t*)&((din)->__type__);\
+  t = t >> 16; \
+  t; \
+  })
+
 
 /* file entry (on disk) */
 struct sfs_disk_entry {

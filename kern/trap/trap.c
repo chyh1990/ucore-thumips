@@ -247,7 +247,7 @@ trap_dispatch(struct trapframe *tf) {
       break;
     default:
       print_trapframe(tf);
-      while(1);
+      panic("Unhandled Exception");
   }
 
 }

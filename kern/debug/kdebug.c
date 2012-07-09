@@ -1,6 +1,5 @@
 #include <defs.h>
 #include <thumips.h>
-#include <stab.h>
 #include <stdio.h>
 #include <string.h>
 #include <sync.h>

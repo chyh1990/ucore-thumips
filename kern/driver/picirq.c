@@ -6,9 +6,6 @@
 
 static bool did_init = 0;
 
-static void
-pic_setmask(uint16_t mask) {
-}
 
 void
 pic_enable(unsigned int irq) {

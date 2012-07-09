@@ -27,7 +27,7 @@ unlock_sin(struct sfs_inode *sin) {
 }
 
 static const struct inode_ops *
-sfs_get_ops(uint16_t type) {
+sfs_get_ops(uint32_t type) {
     switch (type) {
     case SFS_TYPE_DIR:
         return &sfs_node_dirops;
@@ -85,7 +85,7 @@ static int
 sfs_create_inode(struct sfs_fs *sfs, struct sfs_disk_inode *din, uint32_t ino, struct inode **node_store) {
     struct inode *node;
     if ((node = alloc_inode(sfs_inode)) != NULL) {
-        vop_init(node, sfs_get_ops(din->type), info2fs(sfs, sfs));
+        vop_init(node, sfs_get_ops(_SFS_INODE_GET_TYPE(din)), info2fs(sfs, sfs));
         struct sfs_inode *sin = vop_info(node, sfs_inode);
         sin->din = din, sin->ino = ino, sin->dirty = 0, sin->reclaim_count = 1;
         sem_init(&(sin->sem), 1);
@@ -131,7 +131,7 @@ sfs_load_inode(struct sfs_fs *sfs, struct inode **node_store, uint32_t ino) {
         goto failed_cleanup_din;
     }
 
-    assert(din->nlinks != 0);
+    assert(_SFS_INODE_GET_NLINKS(din) != 0);
     if ((ret = sfs_create_inode(sfs, din, ino, &node)) != 0) {
         goto failed_cleanup_din;
     }
@@ -318,7 +318,7 @@ sfs_bmap_truncate_nolock(struct sfs_fs *sfs, struct sfs_inode *sin) {
 
 static int
 sfs_dirent_read_nolock(struct sfs_fs *sfs, struct sfs_inode *sin, int slot, struct sfs_disk_entry *entry) {
-    assert(sin->din->type == SFS_TYPE_DIR && (slot >= 0 && slot < sin->din->blocks));
+    assert(_SFS_INODE_GET_TYPE(sin->din) == SFS_TYPE_DIR && (slot >= 0 && slot < sin->din->blocks));
     int ret;
     uint32_t ino;
     if ((ret = sfs_bmap_load_nolock(sfs, sin, slot, &ino)) != 0) {
@@ -439,7 +439,7 @@ sfs_close(struct inode *node) {
 static int
 sfs_io_nolock(struct sfs_fs *sfs, struct sfs_inode *sin, void *buf, off_t offset, size_t *alenp, bool write) {
     struct sfs_disk_inode *din = sin->din;
-    assert(din->type != SFS_TYPE_DIR);
+    assert(_SFS_INODE_GET_TYPE(din) != SFS_TYPE_DIR);
     off_t endpos = offset + *alenp, blkoff;
     *alenp = 0;
     if (offset < 0 || offset >= SFS_MAX_FILE_SIZE || offset > endpos) {
@@ -560,7 +560,7 @@ sfs_fstat(struct inode *node, struct stat *stat) {
         return ret;
     }
     struct sfs_disk_inode *din = vop_info(node, sfs_inode)->din;
-    stat->st_nlinks = din->nlinks;
+    stat->st_nlinks = _SFS_INODE_GET_NLINKS(din);
     stat->st_blocks = din->blocks;
     stat->st_size = din->size;
     return 0;
@@ -614,7 +614,7 @@ sfs_namefile(struct inode *node, struct iobuf *iob) {
         }
 
         node = parent, sin = vop_info(node, sfs_inode);
-        assert(ino != sin->ino && sin->din->type == SFS_TYPE_DIR);
+        assert(ino != sin->ino && _SFS_INODE_GET_TYPE(sin->din) == SFS_TYPE_DIR);
 
         lock_sin(sin);
         {
@@ -709,7 +709,7 @@ sfs_reclaim(struct inode *node) {
     if ((-- sin->reclaim_count) != 0 || inode_ref_count(node) != 0) {
         goto failed_unlock;
     }
-    if (sin->din->nlinks == 0) {
+    if (_SFS_INODE_GET_NLINKS(sin->din) == 0) {
         if ((ret = vop_truncate(node, 0)) != 0) {
             goto failed_unlock;
         }
@@ -722,7 +722,7 @@ sfs_reclaim(struct inode *node) {
     sfs_remove_links(sin);
     unlock_sfs_fs(sfs);
 
-    if (sin->din->nlinks == 0) {
+    if (_SFS_INODE_GET_NLINKS(sin->din) == 0) {
         sfs_block_free(sfs, sin->ino);
         if ((ent = sin->din->indirect) != 0) {
             sfs_block_free(sfs, ent);
@@ -740,7 +740,7 @@ failed_unlock:
 static int
 sfs_gettype(struct inode *node, uint32_t *type_store) {
     struct sfs_disk_inode *din = vop_info(node, sfs_inode)->din;
-    switch (din->type) {
+    switch (_SFS_INODE_GET_TYPE(din)) {
     case SFS_TYPE_DIR:
         *type_store = S_IFDIR;
         return 0;
@@ -751,7 +751,7 @@ sfs_gettype(struct inode *node, uint32_t *type_store) {
         *type_store = S_IFLNK;
         return 0;
     }
-    panic("invalid file type %d.\n", din->type);
+    panic("invalid file type %d.\n", _SFS_INODE_GET_TYPE(din));
 }
 
 static int
@@ -814,7 +814,7 @@ sfs_lookup(struct inode *node, char *path, struct inode **node_store) {
     assert(*path != '\0' && *path != '/');
     vop_ref_inc(node);
     struct sfs_inode *sin = vop_info(node, sfs_inode);
-    if (sin->din->type != SFS_TYPE_DIR) {
+    if (_SFS_INODE_GET_TYPE(sin->din) != SFS_TYPE_DIR) {
         vop_ref_dec(node);
         return -E_NOTDIR;
     }
