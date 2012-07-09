@@ -150,10 +150,10 @@ endef
 $(foreach bdir,$(USER_APP_BINS),$(eval $(call make-user-app,$(bdir))))
 
 $(USER_OBJDIR)/%.o: $(USER_SRCDIR)/%.c
-	$(CC) -c -mips1  $(USER_INCLUDE)  $(CFLAGS)  $<  -o $@
+	$(CC) -c -mips1  $(USER_INCLUDE) -I$(SRCDIR)/include $(CFLAGS)  $<  -o $@
 
 $(USER_OBJDIR)/%.o: $(USER_SRCDIR)/%.S
-	$(CC) -mips32 -c -D__ASSEMBLY__ $(USER_INCLUDE) -g -EL -G0  $<  -o $@
+	$(CC) -mips32 -c -D__ASSEMBLY__ $(USER_INCLUDE) -I$(SRCDIR)/include -g -EL -G0  $<  -o $@
 
 
 # filesystem
