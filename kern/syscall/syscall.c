@@ -129,6 +129,12 @@ sys_fsync(uint32_t arg[]) {
     return sysfile_fsync(fd);
 }
 
+static int 
+sys_chdir(uint32_t arg[]) {
+    const char *path = (const char *)arg[0];
+    return sysfile_chdir(path);
+}
+
 static int
 sys_getcwd(uint32_t arg[]) {
     char *buf = (char *)arg[0];

@@ -167,7 +167,7 @@ $(OBJDIR)/ucore-kernel-initrd:  $(BUILD_DIR) $(TOOL_MKSFS) $(OBJ) $(USER_APP_BIN
 	rm -rf $(ROOTFS_DIR) $(ROOTFS_IMG)
 	mkdir $(ROOTFS_DIR)
 	cp $(USER_APP_BINS) $(ROOTFS_DIR)
-	cp -r $(USER_SRCDIR)/_archive/ $(ROOTFS_DIR)/test
+	cp -r $(USER_SRCDIR)/_archive/* $(ROOTFS_DIR)/
 	dd if=/dev/zero of=$(ROOTFS_IMG) count=4000
 	$(TOOL_MKSFS) $(ROOTFS_IMG) $(ROOTFS_DIR)
 	$(SED) 's%_FILE_%$(ROOTFS_IMG)%g' tools/initrd_piggy.S.in > $(USER_OBJDIR)/initrd_piggy.S
