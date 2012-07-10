@@ -64,7 +64,7 @@ OBJ       += $(patsubst $(SRCDIR)/%.S, $(OBJDIR)/%.o, $(ASMSRC))
 INCLUDES  := $(addprefix -I,$(SRC_DIR))
 INCLUDES  += -I$(SRCDIR)/include
 
-USER_APPLIST:= forktest yield hello faultreadkernel faultread badarg waitkill pgdir exit sleep
+USER_APPLIST:= pwd echo cat sh ls forktest yield hello faultreadkernel faultread badarg waitkill pgdir exit sleep
 USER_SRCDIR := user
 USER_OBJDIR := $(OBJDIR)/$(USER_SRCDIR)
 USER_LIB_OBJDIR := $(USER_OBJDIR)/libs
@@ -167,6 +167,7 @@ $(OBJDIR)/ucore-kernel-initrd:  $(BUILD_DIR) $(TOOL_MKSFS) $(OBJ) $(USER_APP_BIN
 	rm -rf $(ROOTFS_DIR) $(ROOTFS_IMG)
 	mkdir $(ROOTFS_DIR)
 	cp $(USER_APP_BINS) $(ROOTFS_DIR)
+	cp -r $(USER_SRCDIR)/_archive/ $(ROOTFS_DIR)/test
 	dd if=/dev/zero of=$(ROOTFS_IMG) count=4000
 	$(TOOL_MKSFS) $(ROOTFS_IMG) $(ROOTFS_DIR)
 	$(SED) 's%_FILE_%$(ROOTFS_IMG)%g' tools/initrd_piggy.S.in > $(USER_OBJDIR)/initrd_piggy.S

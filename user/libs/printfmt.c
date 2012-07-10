@@ -15,7 +15,6 @@
  * so that -E_NO_MEM and E_NO_MEM are equivalent.
  * */
 
-#if 0
 static const char * const error_string[MAXERROR + 1] = {
     [0]                     NULL,
     [E_UNSPECIFIED]         "unspecified error",
@@ -40,7 +39,6 @@ static const char * const error_string[MAXERROR + 1] = {
     [E_EXISTS]              "file or directory already exists",
     [E_NOTEMPTY]            "directory is not empty",
 };
-#endif
 
 
 /* *
@@ -89,7 +87,7 @@ getint(va_list *ap, int lflag) {
  * @padc:       character that padded on the left if the actual width is less than @width
  * */
 static void
-printnum(void (*putch)(int, int*, int), int fd, void *putdat,
+printnum(void (*putch)(int, void*, int), int fd, void *putdat,
         unsigned int num, unsigned int base, int width, int padc) {
     unsigned int result = num;
     unsigned int mod = 0;
@@ -118,7 +116,6 @@ printnum(void (*putch)(int, int*, int), int fd, void *putdat,
 }
 
 
-
 /* *
  * vprintfmt - format a string and print it by using putch, it's called with a va_list
  * instead of a variable number of arguments
@@ -132,10 +129,10 @@ printnum(void (*putch)(int, int*, int), int fd, void *putdat,
  * Or you probably want printfmt() instead.
  * */
 void
-vprintfmt(void (*putch)(int, int*, int), int fd, void *putdat, const char *fmt, va_list ap) {
+vprintfmt(void (*putch)(int, void*, int), int fd, void *putdat, const char *fmt, va_list ap) {
     const char *p;
     int ch, err;
-    unsigned long num;
+    int num;
     int base, width, precision, lflag, altflag;
 
     while (1) {
@@ -209,12 +206,12 @@ vprintfmt(void (*putch)(int, int*, int), int fd, void *putdat, const char *fmt, 
             if (err < 0) {
                 err = -err;
             }
-            //if (err > MAXERROR || (p = error_string[err]) == NULL) {
+            if (err > MAXERROR || (p = error_string[err]) == NULL) {
                 printfmt(putch, fd, putdat, "error %d", err);
-            //}
-            //else {
-            //    printfmt(putch, fd, putdat, "%s", p);
-            //}
+            }
+            else {
+                printfmt(putch, fd, putdat, "%s", p);
+            }
             break;
 
         // string
@@ -243,9 +240,9 @@ vprintfmt(void (*putch)(int, int*, int), int fd, void *putdat, const char *fmt, 
         // (signed) decimal
         case 'd':
             num = getint(&ap, lflag);
-            if ((long long)num < 0) {
+            if (num < 0) {
                 putch('-', putdat, fd);
-                num = -(long long)num;
+                num = -num;
             }
             base = 10;
             goto number;
@@ -253,7 +250,7 @@ vprintfmt(void (*putch)(int, int*, int), int fd, void *putdat, const char *fmt, 
         case 'p':
             putch('0', putdat, fd);
             putch('x', putdat, fd);
-            num = (unsigned long long)(uintptr_t)va_arg(ap, void *);
+            num = (unsigned int)(uintptr_t)va_arg(ap, void *);
             base = 16;
             goto number;
 

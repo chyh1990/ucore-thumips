@@ -23,6 +23,8 @@ void __noreturn __panic(const char *file, int line, const char *fmt, ...);
 #define static_assert(x)                                \
     switch (x) { case 0: case (x): ; }
 
+int fprintf(int fd, const char *fmt, ...);
+
 void __noreturn exit(int error_code);
 int fork(void);
 int wait(void);
@@ -33,6 +35,15 @@ int getpid(void);
 void print_pgdir(void);
 int sleep(unsigned int time);
 unsigned int gettime_msec(void);
+int __exec(const char *name, const char **argv);
+
+#define __exec0(name, path, ...)                \
+({ const char *argv[] = {path, ##__VA_ARGS__, NULL}; __exec(name, argv); })
+
+#define exec(path, ...)                         __exec0(NULL, path, ##__VA_ARGS__)
+#define nexec(name, path, ...)                  __exec0(name, path, ##__VA_ARGS__)
+
+void lab6_set_priority(uint32_t priority); //only for lab6
 
 #endif /* !__USER_LIBS_ULIB_H__ */
 

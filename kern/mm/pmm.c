@@ -479,17 +479,17 @@ void
 print_pgdir(void) {
   size_t left, right = 0, perm;
     kprintf("-------------------- BEGIN --------------------\n");
-  while ((perm = get_pgtable_items(0, NPDEENTRY, right, boot_pgdir, &left, &right)) != 0) {
+  while ((perm = get_pgtable_items(0, NPDEENTRY, right, current_pgdir, &left, &right)) != 0) {
     PRINT_PTE("PDE(", right - left,
         left * PTSIZE, right * PTSIZE, (right - left) * PTSIZE, perm2str(perm));
     size_t l, r = 0;
 
-    size_t perm_ref = get_pgtable_items(0, NPTEENTRY, r, (pte_t *) PDE_ADDR(boot_pgdir[left]), &l, &r);
+    size_t perm_ref = get_pgtable_items(0, NPTEENTRY, r, (pte_t *) PDE_ADDR(current_pgdir[left]), &l, &r);
     size_t count, count_ref = 0;
     size_t count_ref_l = 0;
     for (count=0; count<right-left; count++) {
       l = r = 0;
-      while ((perm = get_pgtable_items(0, NPTEENTRY, r, (pte_t *) PDE_ADDR(boot_pgdir[left+count]), &l, &r)) != 0) {
+      while ((perm = get_pgtable_items(0, NPTEENTRY, r, (pte_t *) PDE_ADDR(current_pgdir[left+count]), &l, &r)) != 0) {
         if (perm != perm_ref || count == right-left-1) {
           size_t total_entries = (count-count_ref-1)*NPTEENTRY + (r - l) + (NPTEENTRY - count_ref_l);
           PRINT_PTE("  |-- PTE(", total_entries, 

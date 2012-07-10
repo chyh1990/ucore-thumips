@@ -3,6 +3,7 @@
  */
 #include <asm/regdef.h>
 #include <asm/mipsregs.h> 
+#include <memlayout.h>
 
 .extern current # current pcb proc.h
 .extern mips_trap
@@ -40,7 +41,9 @@ ramExcHandle_general:
    /* Coming from user mode - load kernel stack into sp */
    la k0, current /* get address of "curkstack" */
    lw k0, 0(k0)
-   lw sp, 72(k0)			/* get its value */
+   lw k0, 12(k0)
+   addiu sp, k0, KSTACKSIZE
+   #lw sp, 72(k0)			/* get its value */
    nop				/* delay slot for the load */
   
 1:
@@ -194,6 +197,7 @@ exception_return:
 
    /*     16(sp)		   no need to restore tf_vaddr */
    lw t0, 20(sp)		/* load status register value into t0 */
+   ori t0, t0, ST0_EXL
    nop				/* load delay slot */
    mtc0 t0, CP0_STATUS /* store it back to coprocessor 0 */
    /*     24(sp)		   no need to restore tf_cause */

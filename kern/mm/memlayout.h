@@ -8,7 +8,7 @@
 #define KERNTOP             (KERNBASE + KMEMSIZE)
 
 #define KSTACKPAGE          2                           // # of pages in kernel stack
-#define KSTACKSIZE          (KSTACKPAGE * PGSIZE)       // sizeof kernel stack
+#define KSTACKSIZE          (KSTACKPAGE * 4096)       // sizeof kernel stack
 
 #define USERBASE            0x10000000
 #define USERTOP             MIPS_KSEG0 

@@ -1,6 +1,9 @@
 #include <thumips.h>
-#include <unistd.h>
 #include <stdio.h>
+#include <syscall.h>
+#include <file.h>
+#include <ulib.h>
+#include <unistd.h>
 
 /* HIGH level console I/O */
 
@@ -9,31 +12,11 @@
  * increace the value of counter pointed by @cnt.
  * */
 static void
-cputch(int c, int *cnt, int fd) {
+cputch(int c, int *cnt) {
     sys_putc(c);
     (*cnt) ++;
 }
-#if 0
-/* *
- * cprintf - formats a string and writes it to stdout
- *
- * The return value is the number of characters which would be
- * written to stdout.
- * */
-int
-cprintf(const char *str) {
-    int cnt = 0;
-    while(*str){
-      kputchar(*str);
-      cnt++;
-      str++;
-    }
-    //va_start(ap, fmt);
-    //cnt = vcprintf(fmt, ap);
-    //va_end(ap);
-    return cnt;
-}
-#endif
+
 
 /* *
  * vcprintf - format a string and writes it to stdout
@@ -115,20 +98,34 @@ cputs(const char *str) {
     int cnt = 0;
     char c;
     while ((c = *str ++) != '\0') {
-        cputch(c, &cnt,0);
+        cputch(c, &cnt);
     }
-    cputch('\n', &cnt,0);
+    cputch('\n', &cnt);
     return cnt;
 }
 
-#if 0
-/* getchar - reads a single non-zero character from stdin */
-int
-getchar(void) {
-    int c;
-    while ((c = cons_getc()) == 0)
-        /* do nothing */;
-    return c;
+
+static void
+fputch(char c, int *cnt, int fd) {
+    write(fd, &c, sizeof(char));
+    (*cnt) ++;
 }
 
-#endif
+int
+vfprintf(int fd, const char *fmt, va_list ap) {
+    int cnt = 0;
+    vprintfmt((void*)fputch, fd, &cnt, fmt, ap);
+    return cnt;
+}
+
+int
+fprintf(int fd, const char *fmt, ...) {
+    va_list ap;
+
+    va_start(ap, fmt);
+    int cnt = vfprintf(fd, fmt, ap);
+    va_end(ap);
+
+    return cnt;
+}
+

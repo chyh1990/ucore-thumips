@@ -681,8 +681,8 @@ load_icode(int fd, int argc, char **kargv) {
     for (i = 0; i < argc; i ++) {
         uargv[i] = strcpy((char *)(stacktop + i * PGSIZE), kargv[i]);
     }
-    stacktop = (uintptr_t)uargv - sizeof(int);
-    *(int *)stacktop = argc;
+    //stacktop = (uintptr_t)uargv - sizeof(int);
+    //*(int *)stacktop = argc;
 
     struct trapframe *tf = current->tf;
     memset(tf, 0, sizeof(struct trapframe));
@@ -694,8 +694,10 @@ load_icode(int fd, int argc, char **kargv) {
     status |= KSU_USER;
     status |= ST0_EXL;
     tf->tf_status = status;
+    tf->tf_regs.reg_r[MIPS_REG_A0] = argc;
+    tf->tf_regs.reg_r[MIPS_REG_A1] = (uint32_t)uargv;
 
-    kprintf("## %08x\n", tf->tf_status);
+    //kprintf("## %08x\n", tf->tf_status);
     ret = 0;
 out:
     return ret;
@@ -937,7 +939,7 @@ const char *argv[] = {path, ##__VA_ARGS__, NULL};       \
 // user_main - kernel thread used to exec a user program
 static int
 user_main(void *arg) {
-    KERNEL_EXECVE(forktest);
+    KERNEL_EXECVE(sh);
     panic("user_main execve failed.\n");
 }
 
@@ -992,12 +994,12 @@ proc_init(void) {
     idleproc->state = PROC_RUNNABLE;
     idleproc->kstack = (uintptr_t)bootstack;
     idleproc->need_resched = 1;
-	
-	if ((idleproc->fs_struct = fs_create()) == NULL) {
-        panic("create fs_struct (idleproc) failed.\n");
+
+    if ((idleproc->fs_struct = fs_create()) == NULL) {
+      panic("create fs_struct (idleproc) failed.\n");
     }
     fs_count_inc(idleproc->fs_struct);
-	
+
     set_proc_name(idleproc, "idle");
     nr_process ++;
 

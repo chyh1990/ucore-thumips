@@ -56,6 +56,7 @@ sysfile_close(int fd) {
 int
 sysfile_read(int fd, void *base, size_t len) {
     struct mm_struct *mm = current->mm;
+    //kprintf("&& %08x %08x %d\n",current->fs_struct,current->fs_struct->pwd, current->fs_struct->fs_count.counter);
     if (len == 0) {
         return 0;
     }
