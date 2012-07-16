@@ -8,7 +8,8 @@
 #define ELF_MAGIC 0x464C457F
 
 /* off = offset from s0 */
-
+/* load a 32bit word from Flash, 
+ * off is byte-addressed */
 #define LOAD_WORD_I(dst, off) \
   la $t7, ((off) << 1); \
   addu $t7, $s0, $t7; \
