@@ -90,7 +90,7 @@ MAKEDEPEND = $(CLANG) -M $(CFLAGS) $(INCLUDES) -o $(DEPDIR)/$*.d $<
 
 .PHONY: all checkdirs clean 
 
-all: checkdirs  obj/ucore-kernel-initrd
+all: checkdirs boot/loader.bin obj/ucore-kernel-initrd
 
 $(shell mkdir -p $(DEP_DIR))
 
@@ -126,6 +126,7 @@ $(DEP_DIR):
 clean:
 	-rm -rf $(BUILD_DIR)
 	-rm -rf $(DEPDIR)
+	-rm -rf boot/loader.o boot/loader boot/loader.bin
 
 
 ifneq ($(MAKECMDGOALS),clean)
@@ -177,3 +178,7 @@ $(OBJDIR)/ucore-kernel-initrd:  $(BUILD_DIR) $(TOOL_MKSFS) $(OBJ) $(USER_APP_BIN
 				 $(USER_OBJDIR)/initrd.img.o -o $@
 	rm -rf $(ROOTFS_DIR)
 
+boot/loader.bin: boot/bootasm.S
+	$(CC) $(CFLAGS) -g -c -o boot/loader.o $^
+	$(LD) -EL -n -G0 -Ttext 0xbfc00000 -o boot/loader boot/loader.o
+	$(OBJCOPY) -O binary  -S boot/loader $@

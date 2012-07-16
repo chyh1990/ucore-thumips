@@ -141,6 +141,8 @@ this problem by giving GCC options correctly:
 CFLAGS	:=  -EL -G0 -fno-delayed-branch -Wa,-O0
 \end{verbatim}
 
+An example MIPS32S C project can be found in test1.tar.gz.
+
 
 \section{Source Code Organization}
 This section introduces the source code orginazation of ucore-thumips
@@ -201,6 +203,13 @@ Bootstrap diverses on different platforms:
   \caption{Bootable Kernel Image Layout}
   \label{tab:layout}
 \end{table}
+
+Then, the C enironment must be setup:
+\begin{itemize}
+\item \emph{sp}, setup the stack
+\item \emph{gp}, set to \_gp (defined in ldscript)
+\item zero .bss section
+\end{itemize}
 
 For convenience, root filesystem image(ramdisk) is linked
 with the kernel, appending at the end of the \emph{.data} section.
