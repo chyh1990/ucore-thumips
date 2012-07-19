@@ -110,7 +110,8 @@ qemu-system-mipsel -M mipssim -m 32M -serial stdio
   -kernel obj/ucore-kernel-initrd
 \end{verbatim}
 
-But we recommend to use our modified Qemu to simulate our simplified MIPS Instruction Set. 
+But we recommend to use our modified Qemu to simulate our simplified MIPS Instruction Set
+and Flash support. 
 
 what's more, it will be necessary to setup the mips-sde-elf-gdb properly, refer to 
 the following \emph{.gdbinit} example:
@@ -190,8 +191,8 @@ in the MIPS32S CPU, which is similar to the standard MIPS32 CPU.
 Thus, I refer to Harvard's OS/161\cite{OS161} project during writing the code.
 
 \subsection{Booting}
-Bootstrap diverses on different platforms: 
-%TODO
+The booting process is also simulated 
+
 \begin{table}[h]
   \centering
   \begin{tabular}{|r|r|}
