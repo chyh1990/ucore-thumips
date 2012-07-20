@@ -2,7 +2,7 @@ EMPTY	:=
 SPACE	:= $(EMPTY) $(EMPTY)
 SLASH	:= /
 
-ON_FPGA :=n
+ON_FPGA :=y
 
 V       := @
 
@@ -181,9 +181,9 @@ $(OBJDIR)/ucore-kernel-initrd:  $(BUILD_DIR) $(TOOL_MKSFS) $(OBJ) $(USER_APP_BIN
 	mkdir $(ROOTFS_DIR)
 	cp $(USER_APP_BINS) $(ROOTFS_DIR)
 	cp -r $(USER_SRCDIR)/_archive/* $(ROOTFS_DIR)/
-	dd if=/dev/zero of=$(ROOTFS_IMG) count=$(INITRD_BLOCK_CNT)
-	#touch $(ROOTFS_IMG)
-	$(TOOL_MKSFS) $(ROOTFS_IMG) $(ROOTFS_DIR)
+	#dd if=/dev/zero of=$(ROOTFS_IMG) count=$(INITRD_BLOCK_CNT)
+	touch $(ROOTFS_IMG)
+	#$(TOOL_MKSFS) $(ROOTFS_IMG) $(ROOTFS_DIR)
 	$(SED) 's%_FILE_%$(ROOTFS_IMG)%g' tools/initrd_piggy.S.in > $(USER_OBJDIR)/initrd_piggy.S
 	$(AS) $(USER_OBJDIR)/initrd_piggy.S -o $(USER_OBJDIR)/initrd.img.o
 	@echo LINK $@
