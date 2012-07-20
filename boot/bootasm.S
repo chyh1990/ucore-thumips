@@ -5,6 +5,7 @@
  */
 
 #define FLASH_START 0xBE000000
+#define FLASH_SIZE  0x01000000
 #define ELF_MAGIC 0x464C457F
 
 /* off = offset from s0 */
@@ -38,6 +39,11 @@ __start:
   nop
 
 load_elf:
+  #dirty hack
+  la $t0, (FLASH_START+FLASH_SIZE - 8)
+  la $t1, 0x00FF
+  sw $t1, 0($t0)
+
   #addr of elfheader, s0
   la $s0, FLASH_START
   #e_magic

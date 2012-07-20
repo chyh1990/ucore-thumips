@@ -2,7 +2,7 @@ EMPTY	:=
 SPACE	:= $(EMPTY) $(EMPTY)
 SLASH	:= /
 
-ON_FPGA :=n
+ON_FPGA :=y
 
 V       := @
 
