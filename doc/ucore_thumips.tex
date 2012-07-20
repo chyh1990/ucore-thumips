@@ -191,17 +191,39 @@ in the MIPS32S CPU, which is similar to the standard MIPS32 CPU.
 Thus, I refer to Harvard's OS/161\cite{OS161} project during writing the code.
 
 \subsection{Booting}
-The booting process is also simulated 
+The booting process is also simulated. Our Qemu needs the following files:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|l|l|}
+\hline
+ File & Type & Description \\
+\hline
+ucore-kernel-initrd & ELF & ucore kernel with ramdisk\\
+flash.img & Binary & used for flash simulation, can be a link to the kernel\\
+boot/loader.bin & Binary & BIOS, knows ELF and load kernel from Flash\\
+\hline
+\end{tabular}
+\caption{Qemu Files}
+\label{tab:qemufile}
+\end{table}
+
+
+There is two ways to use our modified Qemu
+to boot ucoer for MIPS. 
 
 \begin{table}[h]
   \centering
-  \begin{tabular}{|r|r|}
+  \begin{tabular}{|r|r|r|}
     \hline
-    File Offset & Binary \\
+    Offset & Size & Usage\\
     \hline
+    0x00000000 & 0x80000000 & Userspace, TLB mapped\\
+    0x80000000 & 0x20000000 & Kernel Space, Direct mapping \\
+    0xA0000000 & 0x20000000 & IO Space, Direct Mapping \\
     \hline
   \end{tabular}
-  \caption{Bootable Kernel Image Layout}
+  \caption{Bootable Kernel Memory Layout}
   \label{tab:layout}
 \end{table}
 
