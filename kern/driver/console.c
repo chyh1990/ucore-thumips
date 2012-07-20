@@ -46,6 +46,7 @@ serial_init(void) {
     // Turn off the FIFO
     outb(COM1 + COM_FCR, 0);
 
+#ifdef MACH_QEMU
     // Set speed; requires DLAB latch
     outb(COM1 + COM_LCR, COM_LCR_DLAB);
     outb(COM1 + COM_DLL, (uint8_t) (115200 / 9600));
@@ -58,6 +59,9 @@ serial_init(void) {
     outb(COM1 + COM_MCR, 0);
     // Enable rcv interrupts
     outb(COM1 + COM_IER, COM_IER_RDI);
+#elif defined MACH_FPGA
+    //TODO
+#endif
 
     pic_enable(COM1_IRQ);
 }
@@ -65,7 +69,11 @@ serial_init(void) {
 
 static void
 serial_putc_sub(int c) {
+#ifdef MACH_QEMU
     outb(COM1 + COM_TX, c);
+#elif defined MACH_FPGA
+    //TODO
+#endif
 }
 
 /* serial_putc - print character to serial port */
@@ -83,10 +91,15 @@ serial_putc(int c) {
 /* serial_proc_data - get data from serial port */
 static int
 serial_proc_data(void) {
+    int c;
+#ifdef MACH_QEMU
     if (!(inb(COM1 + COM_LSR) & COM_LSR_DATA)) {
         return -1;
     }
-    int c = inb(COM1 + COM_RX);
+    c = inb(COM1 + COM_RX);
+#elif defined MACH_FPGA
+    //TODO
+#endif
     if (c == 127) {
         c = '\b';
     }

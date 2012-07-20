@@ -20,9 +20,11 @@ kernel_entry:
 	.align 4
 reset:
   /* from u-boot */
+#ifdef MACH_QEMU
 	/* Clear watch registers */
 	mtc0	$zero, CP0_WATCHLO
 	mtc0	$zero, CP0_WATCHHI
+#endif
 
 	/* WP(Watch Pending), SW0/1 should be cleared */
 	mtc0	$zero, CP0_CAUSE
@@ -46,20 +48,21 @@ reset:
   mtc0 $t0, CP0_STATUS
 
 #zero bss
-  la $a0, edata
-  la $a1, end
+  la $t0, edata
+  la $t1, end
   
 2:
-  sw $zero, 0($a0)
-  addiu $a0, $a0, 4
-  slt $a3, $a0, $a1
-  bgtz $a3, 2b
+  sw $zero, 0($t0)
+  addiu $t0, $t0, 4
+  slt $t3, $t0, $t1
+  bgtz $t3, 2b
   nop 
 
   addiu $sp, $sp, -16
   la $t9, kern_init 
   jal $t9
   nop
+#never here
   bgez $zero, .
   nop
 

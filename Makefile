@@ -1,7 +1,8 @@
-PROJ	:= 5
 EMPTY	:=
 SPACE	:= $(EMPTY) $(EMPTY)
 SLASH	:= /
+
+ON_FPGA :=y
 
 V       := @
 
@@ -64,7 +65,18 @@ OBJ       += $(patsubst $(SRCDIR)/%.S, $(OBJDIR)/%.o, $(ASMSRC))
 INCLUDES  := $(addprefix -I,$(SRC_DIR))
 INCLUDES  += -I$(SRCDIR)/include
 
-USER_APPLIST:= pwd echo cat sh ls forktest yield hello faultreadkernel faultread badarg waitkill pgdir exit sleep
+ifeq  ($(ON_FPGA), y)
+USER_APPLIST:= sh ls 
+INITRD_BLOCK_CNT:=600 
+FPGA_LD_FLAGS += -S
+MACH_DEF := -DMACH_FPGA
+else
+USER_APPLIST:= pwd cat sh ls forktest yield hello faultreadkernel faultread badarg waitkill pgdir exit sleep
+# 2M
+INITRD_BLOCK_CNT:=4000 
+MACH_DEF := -DMACH_QEMU
+endif
+
 USER_SRCDIR := user
 USER_OBJDIR := $(OBJDIR)/$(USER_SRCDIR)
 USER_LIB_OBJDIR := $(USER_OBJDIR)/libs
@@ -110,10 +122,10 @@ $(DEPDIR)/%.d: $(SRCDIR)/%.c
 		$(CC) -MM -MT "$(OBJDIR)/$*.o $@" $(CFLAGS) $(INCLUDES) $< > $@; 
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.c
-	$(CC) -c -mips1 $(INCLUDES) $(CFLAGS)  $<  -o $@
+	$(CC) -c -mips1 $(INCLUDES) $(CFLAGS) $(MACH_DEF) $<  -o $@
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.S
-	$(CC) -mips32 -c -D__ASSEMBLY__ $(INCLUDES) -g -EL -G0  $<  -o $@
+	$(CC) -mips32 -c -D__ASSEMBLY__ $(MACH_DEF) $(INCLUDES) -g -EL -G0  $<  -o $@
 
 checkdirs: $(BUILD_DIR) $(DEP_DIR)
 
@@ -143,7 +155,7 @@ $(USER_LIB): $(BUILD_DIR) $(USER_LIB_OBJ)
 define make-user-app
 $1: $(BUILD_DIR) $(addsuffix .o,$1) $(USER_LIB)
 	@echo LINK $$@
-	$(LD) -T $(USER_LIB_SRCDIR)/user.ld  $(addsuffix .o,$1) $(USER_LIB) -o $$@
+	$(LD) $(FPGA_LD_FLAGS) -T $(USER_LIB_SRCDIR)/user.ld  $(addsuffix .o,$1) $(USER_LIB) -o $$@
 	$(SED) 's/$$$$FILE/$(notdir $1)/g' tools/piggy.S.in > $(USER_OBJDIR)/piggy.S
 	$(AS) $(USER_OBJDIR)/piggy.S -o $$@.piggy.o
 endef
@@ -169,12 +181,12 @@ $(OBJDIR)/ucore-kernel-initrd:  $(BUILD_DIR) $(TOOL_MKSFS) $(OBJ) $(USER_APP_BIN
 	mkdir $(ROOTFS_DIR)
 	cp $(USER_APP_BINS) $(ROOTFS_DIR)
 	cp -r $(USER_SRCDIR)/_archive/* $(ROOTFS_DIR)/
-	dd if=/dev/zero of=$(ROOTFS_IMG) count=4000
+	dd if=/dev/zero of=$(ROOTFS_IMG) count=$(INITRD_BLOCK_CNT)
 	$(TOOL_MKSFS) $(ROOTFS_IMG) $(ROOTFS_DIR)
 	$(SED) 's%_FILE_%$(ROOTFS_IMG)%g' tools/initrd_piggy.S.in > $(USER_OBJDIR)/initrd_piggy.S
 	$(AS) $(USER_OBJDIR)/initrd_piggy.S -o $(USER_OBJDIR)/initrd.img.o
 	@echo LINK $@
-	$(LD) -nostdlib -n -G 0 -static -T tools/kernel.ld $(OBJ) \
+	$(LD) $(FPGA_LD_FLAGS) -nostdlib -n -G 0 -static -T tools/kernel.ld $(OBJ) \
 				 $(USER_OBJDIR)/initrd.img.o -o $@
 	rm -rf $(ROOTFS_DIR)
 
