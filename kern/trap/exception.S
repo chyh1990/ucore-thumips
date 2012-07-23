@@ -78,7 +78,7 @@ common_exception:
     * Allocate stack space for 37 words to hold the trap frame,
     * plus four more words for a minimal argument block.
     */
-   addi sp, sp, -164
+   addiu sp, sp, -164
 
    /* 
     * Save general registers.

@@ -43,10 +43,9 @@ serial_init(void) {
     if(serial_exists)
       return ;
     serial_exists = 1;
+#ifdef MACH_QEMU
     // Turn off the FIFO
     outb(COM1 + COM_FCR, 0);
-
-#ifdef MACH_QEMU
     // Set speed; requires DLAB latch
     outb(COM1 + COM_LCR, COM_LCR_DLAB);
     outb(COM1 + COM_DLL, (uint8_t) (115200 / 9600));

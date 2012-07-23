@@ -34,6 +34,6 @@ tlb_invalidate(pde_t *pgdir, uintptr_t la) {
 void tlb_invalidate_all(){
     int i;
     for(i=0;i<128;i++)
-      write_one_tlb(i, 0, i, 0, 0);
+      write_one_tlb(i, 0, 0x80000000+(i<<20), 0, 0);
 }
 
