@@ -17,6 +17,7 @@
 .extern ramExcHandle_tlbmiss
 .extern ramExcHandle_general
 
+.set noreorder
 .global __exception_vector
 __exception_vector:
   RVECENT(ramExcHandle_tlbmiss,0) 
