@@ -226,7 +226,24 @@ trap_dispatch(struct trapframe *tf) {
       break;
     case EX_RI:
       print_trapframe(tf);
-      panic("hey man! Do NOT use that insn!");
+      if(trap_in_kernel(tf)) {
+        panic("hey man! Do NOT use that insn!");
+      }
+      do_exit(-E_KILLED);
+      break;
+    case EX_CPU:
+      print_trapframe(tf);
+      if(trap_in_kernel(tf)) {
+        panic("CpU exception should not occur in kernel mode!");
+      }
+      do_exit(-E_KILLED);
+      break;
+    case EX_OVF:
+      print_trapframe(tf);
+      if(trap_in_kernel(tf)) {
+        panic("Ov exception occur in kernel mode!");
+      }
+      do_exit(-E_KILLED);
       break;
     case EX_SYS:
       //print_trapframe(tf);

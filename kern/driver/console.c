@@ -113,9 +113,11 @@ serial_proc_data(void) {
 
 void serial_int_handler(void *opaque)
 {
+#ifdef MACH_QEMU
   unsigned char id = inb(COM1+COM_IIR);
   if(id & 0x01)
     return ;
+#endif
   //int c = serial_proc_data();
   int c = cons_getc(c);
   extern void dev_stdin_write(char c);

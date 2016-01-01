@@ -33,8 +33,10 @@ bool check_initrd(){
     kprintf("Warning: No Initrd!\n");
     return 0;
   }
-  kprintf("Initrd: 0x%08x - 0x%08x, size: 0x%08x, magic: 0x%08x\n", 
-      _initrd_begin, _initrd_end-1, _initrd_end - _initrd_begin, *(uint32_t*)_initrd_begin);
+  kprintf("Initrd: 0x%08x - 0x%08x, size: 0x%08x, magic: 0x%02x%02x%02x%02x\n", 
+      _initrd_begin, _initrd_end-1, _initrd_end - _initrd_begin,
+      *(uint8_t*)(_initrd_begin+3), *(uint8_t*)(_initrd_begin+2), 
+      *(uint8_t*)(_initrd_begin+1), *(uint8_t*)_initrd_begin);
   return 1;
 }
 
